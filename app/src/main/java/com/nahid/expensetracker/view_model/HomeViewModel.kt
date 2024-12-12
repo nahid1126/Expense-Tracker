@@ -68,7 +68,7 @@ class HomeViewModel(private val repository: ExpanseRepository) : ViewModel() {
     }
 
     fun getIcon(expanse: Expanse): Int {
-        return when (expanse.type) {
+        return when (expanse.category) {
             "Salary" -> {
                 R.drawable.ic_up
             }
