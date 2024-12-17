@@ -1,5 +1,6 @@
 package com.nahid.expensetracker.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,9 +17,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,21 +37,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.nahid.expensetracker.R
-import com.nahid.expensetracker.model.data.Expanse
+import com.nahid.expensetracker.model.data.Expense
 import com.nahid.expensetracker.ui.theme.Zinc
 import com.nahid.expensetracker.view_model.HomeViewModel
 import com.nahid.expensetracker.view_model.HomeViewModelFactory
 
+private const val TAG = "HomeScreen"
 @Composable
-fun HomeScreen() {
+fun HomeScreen(rememberNavController: NavHostController) {
     val viewModel: HomeViewModel =
         HomeViewModelFactory(LocalContext.current).create(HomeViewModel::class.java)
+    val expenseList by viewModel.expenseList.collectAsState()
     Surface(modifier = Modifier.fillMaxSize()) {
         ConstraintLayout(modifier = Modifier.fillMaxSize()) {
-            val (nameRow, list, card, topBar) = createRefs()
+            val (nameRow, list, card, topBar, actionButton) = createRefs()
             Image(painter = painterResource(id = R.drawable.bg),
                 contentDescription = null,
                 modifier = Modifier.constrainAs(topBar) {
@@ -76,8 +88,9 @@ fun HomeScreen() {
                 )
             }
             val totalBalance = viewModel.getBalance()
-            val expanse = viewModel.getExpanse()
+            val expanse = viewModel.getExpense()
             val income = viewModel.getIncome()
+
             CardItem(modifier = Modifier.constrainAs(card) {
                 top.linkTo(nameRow.bottom)
                 start.linkTo(nameRow.start)
@@ -92,8 +105,22 @@ fun HomeScreen() {
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                         height = Dimension.fillToConstraints
-                    }, list = viewModel.expanseList, viewModel
+                    }, list = expenseList, viewModel = viewModel
             )
+            FloatingActionButton(
+                containerColor = Zinc,
+                contentColor = Color.White,
+                onClick = { rememberNavController.navigate("/add") },
+                modifier = Modifier
+                    .zIndex(1f)
+                    .padding(10.dp)
+                    .constrainAs(actionButton) {
+                        end.linkTo(parent.end)
+                        bottom.linkTo(parent.bottom)
+                    }
+            ) {
+                Icon(Icons.Filled.Add, "Floating action button.")
+            }
         }
     }
 }
@@ -142,7 +169,7 @@ fun CardItem(modifier: Modifier, totalBalance: String, expanse: String, income: 
             )
             CardRowItem(
                 modifier = Modifier.align(Alignment.CenterEnd),
-                title = "Expanse", amount = expanse,
+                title = "Expense", amount = expanse,
                 icon = R.drawable.ic_up
             )
         }
@@ -161,7 +188,7 @@ fun CardRowItem(modifier: Modifier, title: String, amount: String, icon: Int) {
 }
 
 @Composable
-fun TransactionList(modifier: Modifier, list: List<Expanse>, viewModel: HomeViewModel) {
+fun TransactionList(modifier: Modifier, list: List<Expense>, viewModel: HomeViewModel) {
     LazyColumn(modifier = modifier) {
         item {
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -175,10 +202,10 @@ fun TransactionList(modifier: Modifier, list: List<Expanse>, viewModel: HomeView
         }
         items(list) {
             TransactionListItem(
-                title = it.name,
+                title = it.title,
                 amount = it.amount.toString(),
                 icon = viewModel.getIcon(it),
-                date = it.date.toString(),
+                date = it.date,
                 color = if (it.type == "Income") Color.Green else Color.Red
             )
         }
@@ -216,9 +243,8 @@ fun TransactionListItem(title: String, amount: String, icon: Int, date: String, 
     }
 }
 
-
+@Preview(showBackground = true)
 @Composable
-@Preview
-fun PreviewHomeScreen(showBackground: Boolean = true) {
-    HomeScreen()
+fun PreviewHomeScreen() {
+    HomeScreen(rememberNavController())
 }

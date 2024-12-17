@@ -77,4 +77,5 @@ dependencies {
     implementation(libs.room.ktx)
     implementation(libs.room.runtime)
     kapt(libs.kapt.room)
+    implementation(libs.navigation)
 }

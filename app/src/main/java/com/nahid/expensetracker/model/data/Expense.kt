@@ -7,12 +7,12 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 @Entity
-data class Expanse(
+data class Expense(
     @PrimaryKey(autoGenerate = true)
     val id: Int?,
-    val name: String,
-    val amount: Double,
-    val date: Long,
+    val title: String,
+    val amount: Int,
+    val date: String,
     val type: String,
     val category: String
 ):Parcelable

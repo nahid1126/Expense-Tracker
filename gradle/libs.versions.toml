@@ -13,6 +13,7 @@ lifecycle_version = "2.5.1"
 coroutines_version = "1.6.0"
 room-version = "2.6.1"
 per-version = "1.7.20"
+navigation-version = "2.7.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -45,10 +46,12 @@ room-ktx = { module = "androidx.room:room-ktx", version.ref = "room-version" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room-version" }
 kapt-room = { module = "androidx.room:room-compiler", version.ref = "room-version" }
 
+#navigation
+navigation = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-version" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "per-version" }
-

@@ -6,21 +6,21 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.nahid.expensetracker.model.data.Expanse
+import com.nahid.expensetracker.model.data.Expense
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface ExpanseDao {
+interface ExpenseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertExpanse(expanse: Expanse)
+    suspend fun insertExpense(expense: Expense)
 
-    @Query("SELECT * FROM Expanse")
-    fun getAllExpanse(): Flow<List<Expanse>>
+    @Query("SELECT * FROM Expense")
+    fun getAllExpense(): Flow<List<Expense>>
 
     @Update
-    suspend fun updateExpanse(expanse: Expanse)
+    suspend fun updateExpense(expense: Expense)
 
     @Delete
-    suspend fun deleteExpanse(expanse: Expanse)
+    suspend fun deleteExpense(expense: Expense)
 
 }

@@ -4,12 +4,12 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.nahid.expensetracker.model.data.Expanse
-import com.nahid.expensetracker.model.local.dao.ExpanseDao
+import com.nahid.expensetracker.model.data.Expense
+import com.nahid.expensetracker.model.local.dao.ExpenseDao
 
-@Database(entities = [Expanse::class], version = 1, exportSchema = false)
+@Database(entities = [Expense::class], version = 1, exportSchema = false)
 abstract class LocalDatabase : RoomDatabase() {
-    abstract fun expanseDao(): ExpanseDao
+    abstract fun expanseDao(): ExpenseDao
 
     companion object {
         private const val DATABASE_NAME = "Expanse_Database"
