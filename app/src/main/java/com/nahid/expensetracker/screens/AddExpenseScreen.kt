@@ -16,12 +16,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -30,15 +27,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,6 +62,7 @@ import com.nahid.expensetracker.ui.theme.Zinc
 import com.nahid.expensetracker.view_model.AddExpenseViewModel
 import com.nahid.expensetracker.view_model.AddExpenseViewModelFactory
 import kotlinx.coroutines.launch
+import kotlin.math.sin
 
 private const val TAG = "AddExpanseScreen"
 
@@ -108,7 +103,8 @@ fun AddExpenseScreen(rememberNavController: NavHostController) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_back),
                     contentDescription = null,
-                    modifier = Modifier.align(Alignment.CenterStart)
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
                         .clickable { rememberNavController.popBackStack() }
                 )
                 Text(
@@ -179,7 +175,10 @@ fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel) {
 
         Spacer(modifier = Modifier.size(8.dp))
 
-        OutlinedTextField(value = expanseName.value, onValueChange = {
+        OutlinedTextField(
+            value = expanseName.value,
+            singleLine = true,
+            onValueChange = {
             expanseName.value = it
         }, label = {
             Text(text = "Enter Expense Title")
@@ -196,6 +195,7 @@ fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel) {
 
         OutlinedTextField(
             value = amount.value,
+            singleLine = true,
             onValueChange = { amount.value = it },
             label = {
                 Text(text = "Enter Expense Amount")
@@ -299,6 +299,7 @@ fun DropDownMenu(
     ) {
         OutlinedTextField(
             value = selectedText,
+            singleLine = true,
             onValueChange = { selectedText = it },
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
