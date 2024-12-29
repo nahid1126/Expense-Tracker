@@ -78,4 +78,5 @@ dependencies {
     implementation(libs.room.runtime)
     kapt(libs.kapt.room)
     implementation(libs.navigation)
+    implementation(libs.mp.chart)
 }
