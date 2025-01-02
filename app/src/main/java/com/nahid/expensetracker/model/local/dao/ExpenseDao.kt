@@ -23,4 +23,6 @@ interface ExpenseDao {
     @Delete
     suspend fun deleteExpense(expense: Expense)
 
+    @Query("SELECT type, date, SUM(amount) AS total FROM Expense Where type =:type GROUP BY type, date ORDER BY date DESC")
+    fun getAllExpenseByDate(type: String="Expense"): Flow<List<Expense>>
 }

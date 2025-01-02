@@ -57,6 +57,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.nahid.expensetracker.R
+import com.nahid.expensetracker.Utils
 import com.nahid.expensetracker.model.data.Expense
 import com.nahid.expensetracker.ui.theme.Zinc
 import com.nahid.expensetracker.view_model.AddExpenseViewModel
@@ -252,7 +253,7 @@ fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel) {
     if (showDatePicker.value) {
         ExpenseDatePicker(
             onDateSelected = { date ->
-                expenseDate.value = formatDate(date)
+                expenseDate.value = Utils.formatDate(date)
                 showDatePicker.value = false
             },
             onDismiss = { showDatePicker.value = false }
@@ -334,9 +335,4 @@ fun DropDownMenu(
 @Composable
 fun PreviewAddExpenseScreen() {
     AddExpenseScreen(rememberNavController())
-}
-
-fun formatDate(dateMillis: Long): String {
-    val formatter = java.text.SimpleDateFormat("dd-MMM-yyyy", java.util.Locale.getDefault())
-    return formatter.format(java.util.Date(dateMillis))
 }

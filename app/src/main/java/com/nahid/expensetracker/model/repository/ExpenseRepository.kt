@@ -4,7 +4,6 @@ import android.util.Log
 import com.nahid.expensetracker.model.data.Expense
 import com.nahid.expensetracker.model.local.db.LocalDatabase
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 
 private const val TAG = "ExpenseRepository"
 
@@ -25,5 +24,8 @@ class ExpenseRepository(private val localDatabase: LocalDatabase) {
 
     suspend fun deleteExpense(data: Expense) {
         expanseDao.deleteExpense(data)
+    }
+    fun getAllExpenseByDate(): Flow<List<Expense>>? {
+        return expanseDao.getAllExpenseByDate()
     }
 }
