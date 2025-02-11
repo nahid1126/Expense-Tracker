@@ -104,6 +104,7 @@ fun LineChart(entries: List<Entry>) {
             mode = LineDataSet.Mode.CUBIC_BEZIER
             valueTextSize = 12f
             valueTextColor = android.graphics.Color.parseColor("#FF2F7E79")
+            fillDrawable = context.getDrawable(R.drawable.gradient_color)
         }
         lineChart.data = com.github.mikephil.charting.data.LineData(dataset)
         lineChart.apply {
