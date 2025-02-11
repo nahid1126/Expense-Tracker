@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.Entry
 import com.nahid.expensetracker.Utils
 import com.nahid.expensetracker.model.data.Expense
+import com.nahid.expensetracker.model.data.ExpenseSummary
 import com.nahid.expensetracker.model.local.db.LocalDatabase
 import com.nahid.expensetracker.model.repository.ExpenseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,7 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "StatsViewModel"
 class StatsViewModel(private val repository: ExpenseRepository) : ViewModel() {
-    var expenseList = MutableStateFlow<List<Expense>>(emptyList())
+    var expenseList = MutableStateFlow<List<ExpenseSummary>>(emptyList())
         private set
 
 
@@ -33,10 +34,10 @@ class StatsViewModel(private val repository: ExpenseRepository) : ViewModel() {
         }
     }
 
-    fun getEntriesForChart(entries: List<Expense>): List<Entry> {
+    fun getEntriesForChart(entries: List<ExpenseSummary>): List<Entry> {
         val list = mutableListOf<Entry>()
         entries.forEach {
-            list.add(Entry(Utils.formatMilliFromDate(it.date).toFloat(), it.amount.toFloat()))
+            list.add(Entry(Utils.formatMilliFromDate(it.date).toFloat(), it.total_amount.toFloat()))
         }
         return list
     }

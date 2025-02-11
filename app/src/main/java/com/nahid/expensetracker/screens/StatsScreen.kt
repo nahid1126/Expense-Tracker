@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -14,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -24,9 +26,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineDataSet
 import com.nahid.expensetracker.R
+import com.nahid.expensetracker.model.data.ExpenseSummary
 import com.nahid.expensetracker.ui.theme.Zinc
 import com.nahid.expensetracker.view_model.StatsViewModel
 import com.nahid.expensetracker.view_model.StatsViewModelFactory
@@ -82,12 +86,20 @@ fun LineChart(entries: List<Entry>) {
     AndroidView(factory = {
         val view = LayoutInflater.from(context).inflate(R.layout.state_line_chart, null)
         view
-    }, modifier = Modifier) { view ->
+    }, modifier = Modifier.fillMaxWidth().height(250.dp)) { view ->
         val lineChart = view.findViewById<LineChart>(R.id.lineChart)
         val dataset = LineDataSet(entries, "Expense").apply {
             color = android.graphics.Color.parseColor("#FF2F7E79")
-            //valueTextColor =
+            valueTextColor = android.graphics.Color.BLACK
+            lineWidth = 3f
+            axisDependency = YAxis.AxisDependency.RIGHT
+            setDrawFilled(true)
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+            valueTextSize = 12f
+            valueTextColor = android.graphics.Color.parseColor("#FF2F7E79")
         }
+        lineChart.data = com.github.mikephil.charting.data.LineData(dataset)
+        lineChart.invalidate()
     }
 }
 

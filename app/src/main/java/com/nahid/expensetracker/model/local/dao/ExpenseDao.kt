@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.nahid.expensetracker.model.data.Expense
+import com.nahid.expensetracker.model.data.ExpenseSummary
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -23,6 +24,6 @@ interface ExpenseDao {
     @Delete
     suspend fun deleteExpense(expense: Expense)
 
-    @Query("SELECT type, date, SUM(amount) AS total FROM Expense Where type =:type GROUP BY type, date ORDER BY date DESC")
-    fun getAllExpenseByDate(type: String="Expense"): Flow<List<Expense>>
+    @Query("SELECT type, date, SUM(amount) AS total_amount FROM Expense where type = :type GROUP BY type, date ORDER BY date")
+    fun getAllExpenseByDate(type: String = "Expense"): Flow<List<ExpenseSummary>>
 }
