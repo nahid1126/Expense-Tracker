@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,7 +16,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,17 +26,22 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineDataSet
 import com.nahid.expensetracker.R
-import com.nahid.expensetracker.model.data.ExpenseSummary
+import com.nahid.expensetracker.Utils
 import com.nahid.expensetracker.ui.theme.Zinc
 import com.nahid.expensetracker.view_model.StatsViewModel
 import com.nahid.expensetracker.view_model.StatsViewModelFactory
 
 @Composable
 fun StatsScreen(rememberNavController: NavHostController) {
+    val statsViewModel: StatsViewModel =
+        StatsViewModelFactory(rememberNavController.context).create(StatsViewModel::class.java)
+    val expenseByDateList by statsViewModel.expenseList.collectAsState()
+    val topExpenseList by statsViewModel.topExpenseList.collectAsState()
     Scaffold(topBar = {
         Box(modifier = Modifier
             .fillMaxWidth()
@@ -70,12 +75,11 @@ fun StatsScreen(rememberNavController: NavHostController) {
             )
 
         }    }) {
-        val statsViewModel: StatsViewModel =
-            StatsViewModelFactory(rememberNavController.context).create(StatsViewModel::class.java)
-        val expenseByDateList by statsViewModel.expenseList.collectAsState()
         Column(modifier = Modifier.padding(it)) {
             val entries = statsViewModel.getEntriesForChart(expenseByDateList)
             LineChart(entries)
+            Spacer(modifier = Modifier.height(16.dp))
+            TransactionList(Modifier.padding(horizontal = 16.dp,vertical = 8.dp),topExpenseList,"Top Spending")
         }
     }
 }
@@ -86,7 +90,10 @@ fun LineChart(entries: List<Entry>) {
     AndroidView(factory = {
         val view = LayoutInflater.from(context).inflate(R.layout.state_line_chart, null)
         view
-    }, modifier = Modifier.fillMaxWidth().height(250.dp)) { view ->
+    }, modifier = Modifier
+        .fillMaxWidth()
+        .height(300.dp)
+    ) { view ->
         val lineChart = view.findViewById<LineChart>(R.id.lineChart)
         val dataset = LineDataSet(entries, "Expense").apply {
             color = android.graphics.Color.parseColor("#FF2F7E79")
@@ -99,6 +106,22 @@ fun LineChart(entries: List<Entry>) {
             valueTextColor = android.graphics.Color.parseColor("#FF2F7E79")
         }
         lineChart.data = com.github.mikephil.charting.data.LineData(dataset)
+        lineChart.apply {
+            xAxis.valueFormatter =
+                object : com.github.mikephil.charting.formatter.ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String {
+                        return Utils.formatDateFormat(value.toLong())
+                    }
+                }
+            axisLeft.isEnabled = false
+            axisRight.isEnabled = false
+            axisRight.setDrawGridLines(false)
+            axisLeft.setDrawGridLines(false)
+            xAxis.setDrawGridLines(false)
+            xAxis.setDrawAxisLine(false)
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+        }
+
         lineChart.invalidate()
     }
 }

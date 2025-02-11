@@ -29,4 +29,7 @@ class ExpenseRepository(private val localDatabase: LocalDatabase) {
     fun getAllExpenseByDate(): Flow<List<ExpenseSummary>>? {
         return expanseDao.getAllExpenseByDate()
     }
+    fun getTopExpense(): Flow<List<Expense>>? {
+        return expanseDao.getAllTopExpense()
+    }
 }

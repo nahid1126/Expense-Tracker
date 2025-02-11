@@ -58,23 +58,6 @@ class HomeViewModel(private val repository: ExpenseRepository) : ViewModel() {
         return "৳ $expense"
     }
 
-    fun getIcon(expense: Expense): Int {
-        return when (expense.category) {
-            "Salary" -> {
-                R.drawable.ic_up
-            }
-            "Basa", "Kalamoni" -> {
-                R.drawable.fixed
-            }
-            "Transport" -> {
-                R.drawable.transport
-            }
-            else -> {
-                R.drawable.others
-            }
-        }
-    }
-
 }
 
 class HomeViewModelFactory(private val context: Context) : ViewModelProvider.Factory {

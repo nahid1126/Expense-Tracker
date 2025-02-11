@@ -21,6 +21,8 @@ private const val TAG = "StatsViewModel"
 class StatsViewModel(private val repository: ExpenseRepository) : ViewModel() {
     var expenseList = MutableStateFlow<List<ExpenseSummary>>(emptyList())
         private set
+    var topExpenseList = MutableStateFlow<List<Expense>>(emptyList())
+        private set
 
 
     init {
@@ -29,6 +31,14 @@ class StatsViewModel(private val repository: ExpenseRepository) : ViewModel() {
                 if (it.isNotEmpty()) {
                     Log.d(TAG, "GetExpense: $it")
                     expenseList.value = it
+                }
+            }
+        }
+        viewModelScope.launch {
+            getTopExpense().collectLatest {
+                if (it.isNotEmpty()) {
+                    Log.d(TAG, "GetExpense: $it")
+                    topExpenseList.value = it
                 }
             }
         }
@@ -43,6 +53,10 @@ class StatsViewModel(private val repository: ExpenseRepository) : ViewModel() {
     }
 
     private fun getAllExpenseByDate() = repository.getAllExpenseByDate()!!.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(),
+        emptyList()
+    )
+    private fun getTopExpense() = repository.getTopExpense()!!.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(),
         emptyList()
     )

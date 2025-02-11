@@ -43,6 +43,7 @@ import androidx.constraintlayout.compose.Dimension
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.nahid.expensetracker.R
+import com.nahid.expensetracker.Utils
 import com.nahid.expensetracker.model.data.Expense
 import com.nahid.expensetracker.ui.theme.Zinc
 import com.nahid.expensetracker.view_model.HomeViewModel
@@ -105,7 +106,7 @@ fun HomeScreen(rememberNavController: NavHostController) {
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                         height = Dimension.fillToConstraints
-                    }, list = expenseList, viewModel = viewModel
+                    }, list = expenseList, "Recent Transactions"
             )
             FloatingActionButton(
                 containerColor = Zinc,
@@ -189,23 +190,25 @@ fun CardRowItem(modifier: Modifier, title: String, amount: String, icon: Int) {
 }
 
 @Composable
-fun TransactionList(modifier: Modifier, list: List<Expense>, viewModel: HomeViewModel) {
+fun TransactionList(modifier: Modifier, list: List<Expense>, title: String) {
     LazyColumn(modifier = modifier) {
         item {
             Box(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Recent Transaction", fontSize = 20.sp)
+                Text(text = title, fontSize = 20.sp)
                 Text(
                     text = "See All",
                     fontSize = 16.sp,
-                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = 55.dp)
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 55.dp)
                 )
             }
         }
         items(list, key = { it.id!! }) {
             TransactionListItem(
                 title = it.title,
-                amount = it.amount.toString(),
-                icon = viewModel.getIcon(it),
+                amount = "৳${it.amount}",
+                icon = Utils.getIcon(it),
                 date = it.date,
                 color = if (it.type == "Income") Color.Green else Color.Red
             )
@@ -218,7 +221,7 @@ fun TransactionListItem(title: String, amount: String, icon: Int, date: String, 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding( top = 8.dp, end = 55.dp, bottom = 8.dp)
+            .padding(top = 8.dp, end = 55.dp, bottom = 8.dp)
     ) {
         Row {
             Image(
