@@ -3,6 +3,7 @@ package com.nahid.expensetracker.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -55,6 +56,7 @@ fun HomeScreen(rememberNavController: NavHostController) {
     val viewModel: HomeViewModel =
         HomeViewModelFactory(LocalContext.current).create(HomeViewModel::class.java)
     val expenseList by viewModel.expenseList.collectAsState()
+    val context = LocalContext.current
     Surface(modifier = Modifier.fillMaxSize()) {
         ConstraintLayout(modifier = Modifier.fillMaxSize()) {
             val (nameRow, list, card, topBar, actionButton) = createRefs()
@@ -74,7 +76,11 @@ fun HomeScreen(rememberNavController: NavHostController) {
                     end.linkTo(parent.end)
                 }) {
                 Column {
-                    Text(text = "Good Afternoon", fontSize = 16.sp, color = Color.White)
+                    Text(
+                        text = "Good ${Utils.getTimeOfDay()}",
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
                     Text(
                         text = "This is a simple app",
                         fontSize = 20.sp,
@@ -106,12 +112,12 @@ fun HomeScreen(rememberNavController: NavHostController) {
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                         height = Dimension.fillToConstraints
-                    }, list = expenseList, "Recent Transactions"
+                    }, list = expenseList, "Recent Transactions", rememberNavController
             )
             FloatingActionButton(
                 containerColor = Zinc,
                 contentColor = Color.White,
-                onClick = { rememberNavController.navigate("/add") },
+                onClick = { rememberNavController.navigate("add/${-1}") },
                 modifier = Modifier
                     .zIndex(1f)
                     .padding(10.dp)
@@ -190,7 +196,12 @@ fun CardRowItem(modifier: Modifier, title: String, amount: String, icon: Int) {
 }
 
 @Composable
-fun TransactionList(modifier: Modifier, list: List<Expense>, title: String) {
+fun TransactionList(
+    modifier: Modifier,
+    list: List<Expense>,
+    title: String,
+    rememberNavController: NavHostController
+) {
     LazyColumn(modifier = modifier) {
         item {
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -210,18 +221,28 @@ fun TransactionList(modifier: Modifier, list: List<Expense>, title: String) {
                 amount = "৳${it.amount}",
                 icon = Utils.getIcon(it),
                 date = it.date,
-                color = if (it.type == "Income") Color.Green else Color.Red
+                color = if (it.type == "Income") Color.Green else Color.Red,
+                rememberNavController, it.id
             )
         }
     }
 }
 
 @Composable
-fun TransactionListItem(title: String, amount: String, icon: Int, date: String, color: Color) {
+fun TransactionListItem(
+    title: String,
+    amount: String,
+    icon: Int,
+    date: String,
+    color: Color,
+    rememberNavController: NavHostController,
+    id: Int?
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 8.dp, end = 55.dp, bottom = 8.dp)
+            .clickable { rememberNavController.navigate("add/${id ?: -1}") }
     ) {
         Row {
             Image(

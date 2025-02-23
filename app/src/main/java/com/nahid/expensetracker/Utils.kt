@@ -1,6 +1,7 @@
 package com.nahid.expensetracker
 
 import com.nahid.expensetracker.model.data.Expense
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -41,4 +42,19 @@ object Utils {
             }
         }
     }
+
+
+    fun getTimeOfDay(): String {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+
+        return when (hour) {
+            in 5..11 -> "Morning"
+            12 -> "Noon"
+            in 13..16 -> "Afternoon"
+            in 17..19 -> "Evening"
+            else -> "Night"
+        }
+    }
+
 }

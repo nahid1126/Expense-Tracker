@@ -42,6 +42,7 @@ fun StatsScreen(rememberNavController: NavHostController) {
         StatsViewModelFactory(rememberNavController.context).create(StatsViewModel::class.java)
     val expenseByDateList by statsViewModel.expenseList.collectAsState()
     val topExpenseList by statsViewModel.topExpenseList.collectAsState()
+    val context = LocalContext.current
     Scaffold(topBar = {
         Box(modifier = Modifier
             .fillMaxWidth()
@@ -79,7 +80,12 @@ fun StatsScreen(rememberNavController: NavHostController) {
             val entries = statsViewModel.getEntriesForChart(expenseByDateList)
             LineChart(entries)
             Spacer(modifier = Modifier.height(16.dp))
-            TransactionList(Modifier.padding(horizontal = 16.dp,vertical = 8.dp),topExpenseList,"Top Spending")
+            TransactionList(
+                Modifier.padding(horizontal = 16.dp,vertical = 8.dp),
+                topExpenseList,
+                "Top Spending",
+                rememberNavController
+            )
         }
     }
 }

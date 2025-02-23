@@ -33,10 +33,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,17 +66,23 @@ import com.nahid.expensetracker.ui.theme.Zinc
 import com.nahid.expensetracker.view_model.AddExpenseViewModel
 import com.nahid.expensetracker.view_model.AddExpenseViewModelFactory
 import kotlinx.coroutines.launch
-import kotlin.math.sin
 
 private const val TAG = "AddExpanseScreen"
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun AddExpenseScreen(rememberNavController: NavHostController) {
+fun AddExpenseScreen(rememberNavController: NavHostController, expenseId: Int?) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val viewModel: AddExpenseViewModel =
         AddExpenseViewModelFactory(context).create(AddExpenseViewModel::class.java)
+
+    coroutineScope.launch {
+        if (expenseId != -1) {
+            viewModel.getExpenseByID(expenseId!!)
+        }
+    }
+    val expense by viewModel.finalExpense.collectAsState()
     Surface(modifier = Modifier.fillMaxSize()) {
         coroutineScope.launch {
             viewModel.message.collect { message ->
@@ -127,7 +136,7 @@ fun AddExpenseScreen(rememberNavController: NavHostController) {
                 )
 
             }
-
+            Log.d(TAG, "AddExpenseScreen: $expense")
             DataForm(
                 modifier = Modifier
                     .padding(top = 80.dp)
@@ -135,15 +144,16 @@ fun AddExpenseScreen(rememberNavController: NavHostController) {
                         top.linkTo(nameRow.bottom)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
-                    }, viewModel
+                    }, viewModel, expense
             )
         }
     }
 }
 
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel) {
+fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel, expense: Expense?) {
     val context = LocalContext.current
     val expanseName = remember {
         mutableStateOf("")
@@ -163,6 +173,19 @@ fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel) {
         mutableStateOf("")
     }
     val showDatePicker = remember { mutableStateOf(false) }
+    Log.d(TAG, "DataForm: $expense")
+    val updatedExpense = rememberUpdatedState(expense)
+    var isFromUpdate by remember { mutableStateOf(false) }
+    LaunchedEffect(expense) {
+        updatedExpense.value?.let {
+            expanseName.value = it.title
+            amount.value = it.amount.toString()
+            selectedExpenseType = it.type
+            selectedExpenseCategory = it.category
+            expenseDate.value = it.date
+            isFromUpdate = true
+        }
+    }
     Column(
         modifier = modifier
             .padding(16.dp)
@@ -190,6 +213,7 @@ fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel) {
         DropDownMenu(
             listOfItems = expanseTypes,
             "Select Expense Type",
+            selectedExpenseType,
             onItemSelected = { selectedExpenseType = it })
 
         Spacer(modifier = Modifier.size(8.dp))
@@ -209,6 +233,7 @@ fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel) {
         DropDownMenu(
             listOfItems = category,
             "Select Expense Category",
+            selectedExpenseCategory,
             onItemSelected = { selectedExpenseCategory = it })
 
         Spacer(modifier = Modifier.size(8.dp))
@@ -227,18 +252,18 @@ fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel) {
 
         Button(
             onClick = {
-                val expense = Expense(
-                    null,
+                val finalExpense = Expense(
+                    updatedExpense.value?.id,
                     expanseName.value,
                     amount.value.trim().toIntOrNull() ?: 0,
                     expenseDate.value,
                     selectedExpenseType,
                     selectedExpenseCategory
                 )
-                viewModel.addExpanse(expense)
+                viewModel.addExpanse(finalExpense, isFromUpdate)
                 Log.d(
                     TAG,
-                    "DataForm: ${expanseName.value}, ${amount.value}, ${selectedExpenseType}, ${selectedExpenseCategory}, ${expenseDate.value}"
+                    "DataForm:$isFromUpdate ${expanseName.value}, ${amount.value}, ${selectedExpenseType}, ${selectedExpenseCategory}, ${expenseDate.value}"
                 )
             },
             colors = ButtonDefaults.buttonColors(containerColor = Zinc),
@@ -289,6 +314,7 @@ fun ExpenseDatePicker(
 fun DropDownMenu(
     listOfItems: List<String>,
     hintText: String,
+    previousValue: String?,
     onItemSelected: (item: String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -299,7 +325,7 @@ fun DropDownMenu(
         onExpandedChange = { expanded = !expanded },
     ) {
         OutlinedTextField(
-            value = selectedText,
+            value = previousValue ?: selectedText,
             singleLine = true,
             onValueChange = { selectedText = it },
             readOnly = true,
@@ -334,5 +360,5 @@ fun DropDownMenu(
 @Preview(showBackground = true)
 @Composable
 fun PreviewAddExpenseScreen() {
-    AddExpenseScreen(rememberNavController())
+    AddExpenseScreen(rememberNavController(), expenseId = -1)
 }

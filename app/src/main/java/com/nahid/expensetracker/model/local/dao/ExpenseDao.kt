@@ -18,6 +18,9 @@ interface ExpenseDao {
     @Query("SELECT * FROM Expense")
     fun getAllExpense(): Flow<List<Expense>>
 
+    @Query("SELECT * FROM Expense WHERE id = :id")
+    fun getExpenseByID(id: Int): Flow<Expense>
+
     @Query("SELECT * FROM Expense where type ='Expense' ORDER BY amount DESC LIMIT 5 ")
     fun getAllTopExpense(): Flow<List<Expense>>
 

@@ -32,4 +32,7 @@ class ExpenseRepository(private val localDatabase: LocalDatabase) {
     fun getTopExpense(): Flow<List<Expense>>? {
         return expanseDao.getAllTopExpense()
     }
+    fun getExpenseByID(id: Int): Flow<Expense> {
+        return expanseDao.getExpenseByID(id)
+    }
 }

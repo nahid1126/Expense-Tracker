@@ -47,9 +47,10 @@ fun NavHostScreen() {
                 bottomBarVisibility = true
                 HomeScreen(rememberNavController)
             }
-            composable(route = "/add") {
+            composable(route = "add/{id}") {
                 bottomBarVisibility = false
-                AddExpenseScreen(rememberNavController)
+                val expenseId = it.arguments?.getString("id")?.toIntOrNull()
+                AddExpenseScreen(rememberNavController, expenseId)
             }
             composable(route = "/stats") {
                 bottomBarVisibility = true
