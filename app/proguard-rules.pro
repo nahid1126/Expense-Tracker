@@ -1,21 +1,60 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+############################################
+# 🔷 BASIC
+############################################
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+-keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep coroutine metadata (safe minimal keep)
+-keep class kotlin.coroutines.Continuation
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+############################################
+# 🔷 GSON
+############################################
+
+# Keep only your DTOs / entities (narrow scope = better)
+-keep class com.suffixit.fieldforce.data.remote.** { <fields>; }
+-keep class com.suffixit.fieldforce.data.local.entity.** { <fields>; }
+
+# Optional (only if using @Expose heavily)
+-keepattributes *Annotation*
+
+############################################
+# 🔷 KOTLINX SERIALIZATION (if used)
+############################################
+
+-keepattributes kotlinx.serialization.Serializable
+-keepclassmembers class ** {
+    @kotlinx.serialization.SerialName <fields>;
+}
+
+-keep class kotlinx.serialization.** { *; }
+
+-dontwarn io.netty.**
+-dontwarn org.slf4j.**
+-dontwarn com.typesafe.**
+
+############################################
+# 🔷 COROUTINES (SAFE MINIMAL)
+############################################
+
+-keepclassmembers class kotlinx.coroutines.** {
+    *;
+}
+
+-dontwarn kotlinx.atomicfu.**
+
+############################################
+# 🔷 CONSCRYPT / SECURITY
+############################################
+
+-keep class com.android.org.conscrypt.** { *; }
+-keep class javax.annotation.** { *; }
+
+############################################
+# 🔷 SAFE DEFAULT CONSTRUCTORS (LIMITED)
+############################################
+
+# ⚠️ ONLY for serialization frameworks (NOT global)
+-keepclassmembers class com.suffixit.leafglt.data.** {
+    public <init>();
+}

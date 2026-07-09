@@ -1,22 +1,34 @@
 [versions]
-agp = "8.5.2"
-kotlin = "1.9.0"
-coreKtx = "1.13.1"
+agp = "9.2.0"
+firebaseBom = "34.15.0"
+kotlin = "2.3.21"
+coreKtx = "1.17.0"
 junit = "4.13.2"
-junitVersion = "1.2.1"
-espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.8.6"
-activityCompose = "1.9.3"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+lifecycleRuntimeKtx = "2.10.0"
+activityCompose = "1.13.0"
 composeBom = "2024.04.01"
 constraintVersion = "1.1.0"
-lifecycle_version = "2.5.1"
-coroutines_version = "1.6.0"
-room-version = "2.6.1"
-per-version = "1.7.20"
-navigation-version = "2.7.7"
-mp-version = "v3.1.0"
-splash-version = "1.0.1"
+room-version = "2.8.4"
+ksp = "2.3.6"
 constraintlayout = "2.2.0"
+koin = "4.2.1"
+serialization = "1.7.3"
+navVersion = "2.9.8"
+material = "1.13.0"
+lottie = "6.7.1"
+dataStore = "1.2.1"
+materialIcon = "1.7.8"
+kotlinxDatetime = "0.8.0"
+atomicfu = "0.24.0"
+accompanistSystemuicontroller = "0.36.0"
+exifinterface = "1.3.6"
+googleService = "4.4.4"
+firebaseAuth = "24.1.0"
+credentials = "1.6.0"
+credentialsPlayServicesAuth = "1.6.0"
+googleid = "1.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,33 +45,74 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 constraint-layout = {module="androidx.constraintlayout:constraintlayout-compose",version.ref = "constraintVersion"}
-
-
-#Lifecycle
-androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle_version" }
-androidx-lifecycle-livedata = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycle_version" }
-
-#Coroutine
-kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines_version" }
-kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines_version" }
 
 #Room
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room-version" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room-version" }
-kapt-room = { module = "androidx.room:room-compiler", version.ref = "room-version" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room-version" }
 
-#navigation
-navigation = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-version" }
-#MPChard
-mp-chart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "mp-version" }
-#Splash Api
-splash-api = { module = "androidx.core:core-splashscreen", version.ref = "splash-version" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+
+
+#DateTime
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+#Navigation
+navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navVersion" }
+navigation-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+
+#Koin
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+koin-coroutines = { module = "io.insert-koin:koin-core-coroutines", version.ref = "koin" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+
+#DataStore
+dataStorePreferences = { module = "androidx.datastore:datastore-preferences", version.ref = "dataStore" }
+atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" } #Provides Thread Safe Singleton
+
+#Material Icon
+material-icon = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIcon" }
+
+#Lottie
+lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
+
+#SystemUIController
+accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+
+#Firebase
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
+androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
+androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "per-version" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+google-service = { id = "com.google.gms.google-services", version.ref = "googleService" }
+navigation-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+[bundles]
+navigation = [
+    "navigation-compose",
+    "navigation-serialization-json"
+]
+room = ["room-ktx", "room-runtime"]
+koin = [
+    "koin-core",
+    "koin-android",
+    "koin-compose",
+    "koin-compose-viewmodel",
+    "koin-coroutines"
+]
+
+dataStore = [
+    "dataStorePreferences",
+    "atomicfu"
+]

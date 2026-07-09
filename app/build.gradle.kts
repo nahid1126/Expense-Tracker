@@ -1,18 +1,19 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
-    alias(libs.plugins.parcelize)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.navigation.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.google.service)
 }
 
 android {
     namespace = "com.nahid.expensetracker"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.nahid.expensetracker"
-        minSdk = 26
-        targetSdk = 34
+        minSdk = 28
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -32,15 +33,22 @@ android {
         }
     }
     compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
+        buildConfig = true
+        dataBinding = true
     }
+    configurations.implementation{
+        exclude(group = "com.intellij", module = "annotations")
+    }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
@@ -54,6 +62,8 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -62,6 +72,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.firebase.auth)
+    implementation(libs.googleid)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -70,15 +82,23 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.constraint.layout)
+    implementation(libs.material)
+    implementation(libs.androidx.exifinterface)
+    implementation (libs.accompanist.systemuicontroller)
 
-    implementation(libs.androidx.lifecycle.viewmodel)
-    implementation(libs.androidx.lifecycle.livedata)
-    implementation(libs.kotlinx.coroutines)
-    implementation(libs.kotlinx.coroutines.android)
+
     implementation(libs.room.ktx)
     implementation(libs.room.runtime)
-    kapt(libs.kapt.room)
-    implementation(libs.navigation)
-    implementation(libs.mp.chart)
-    implementation(libs.splash.api)
+    ksp(libs.room.compiler)
+    implementation(libs.bundles.room)
+    implementation(libs.lottie)
+    implementation(libs.lottie.compose)
+    implementation(libs.material.icon)
+    implementation(libs.bundles.navigation)
+    implementation(libs.bundles.koin)
+    implementation(libs.bundles.dataStore)
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.bundles.navigation)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 }
