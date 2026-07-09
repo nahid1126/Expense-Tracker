@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.nahid.expensetracker.ui.presentation.navigation.Destinations
+import com.nahid.expensetracker.ui.theme.Gray
+import com.nahid.expensetracker.ui.theme.PurpleSageBush
 
 @Composable
 fun CustomBottomNavigationBar(
@@ -39,8 +41,8 @@ fun CustomBottomNavigationBar(
     onItemClick: (Destinations) -> Unit,
     onFabClick: () -> Unit
 ) {
-    val activeColor = Color(0xFF8A33FF)
-    val inactiveColor = Color(0xFF91919F) // Grayish like in image
+    val activeColor = Color(0xFF2B5748)
+    val inactiveColor = Gray // Grayish like in image
 
     val leftItems = listOf(
         BottomNavItem(Destinations.Home, Icons.Default.Home, "Home"),
@@ -65,10 +67,10 @@ fun CustomBottomNavigationBar(
                 .align(Alignment.BottomCenter)
                 .shadow(
                     elevation = 8.dp,
-                    shape = BottomNavCutoutShape(cornerRadius = 50f),
+                    shape = BottomNavCutoutShape(),
                     clip = false
                 )
-                .clip(BottomNavCutoutShape(cornerRadius = 50f))
+                .clip(BottomNavCutoutShape())
                 .background(Color.White)
         ) {
             Row(

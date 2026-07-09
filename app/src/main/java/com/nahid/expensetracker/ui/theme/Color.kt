@@ -420,7 +420,7 @@ val Sand = Color(0xFFC2B280)
 val CookieBrown = Color(0xFFC7A317)
 
 // App Palette
-val Primary = Color(0xFF1565C0)
+val Primary = Color(0xFF2B5748)
 val PrimaryDark = Color(0xFF0D47A1)
 val PrimaryLight = Color(0xFF42A5F5)
 val SuccessGreen = Color(0xFF2E7D32)

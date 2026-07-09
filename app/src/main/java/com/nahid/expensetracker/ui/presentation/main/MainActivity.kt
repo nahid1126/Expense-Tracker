@@ -58,6 +58,7 @@ import com.nahid.expensetracker.ui.presentation.navigation.Destinations
 import com.nahid.expensetracker.ui.presentation.navigation.NavGraph
 import com.nahid.expensetracker.ui.theme.DarkGreen
 import com.nahid.expensetracker.ui.theme.ExpenseTrackerTheme
+import com.nahid.expensetracker.ui.theme.Purple40
 import com.nahid.expensetracker.ui.theme.Typography
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -186,7 +187,7 @@ fun App(
                                     Icon(
                                         Icons.Default.WavingHand,
                                         contentDescription = null,
-                                        tint = DarkGreen
+                                        tint = Purple40
                                     )
                                 }
                             } else {
