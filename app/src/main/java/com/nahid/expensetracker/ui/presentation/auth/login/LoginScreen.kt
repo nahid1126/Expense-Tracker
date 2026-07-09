@@ -99,7 +99,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .size(300.dp)
                         .clip(CircleShape)
-                        .background(PurpleGrey80),
+                        .background(PurpleGrey80.copy(alpha = 0.4f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
