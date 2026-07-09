@@ -21,7 +21,7 @@ import com.nahid.expensetracker.ui.presentation.home.HomeScreen
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    currentUser: User?,
+    gmail: String?,
     startDestinations: Destinations = Destinations.SplashScreen,
     onBottomNavigationChange: (Int) -> Unit,
     onChangeConfiguration: (MainUIConfig) -> Unit,
@@ -33,7 +33,7 @@ fun NavGraph(
         
         homeGraph(
             navController = navController,
-            currentUser = currentUser,
+            gmail = gmail,
             onChangeConfiguration = onChangeConfiguration,
             onShowMessage = onShowMessage,
             onExit = onExit
@@ -86,7 +86,7 @@ private fun NavGraphBuilder.authGraph(
 @OptIn(ExperimentalSharedTransitionApi::class)
 private fun NavGraphBuilder.homeGraph(
     navController: NavHostController,
-    currentUser: User?,
+    gmail: String?,
     onChangeConfiguration: (MainUIConfig) -> Unit,
     onShowMessage: (String) -> Unit,
     onExit: () -> Unit,
@@ -97,11 +97,12 @@ private fun NavGraphBuilder.homeGraph(
             transformOrigin = TransformOrigin.Center
         )
     }) {
-        if (currentUser != null) {
+        if (gmail != null) {
             HomeScreen(
-                user = currentUser,
+                user = gmail,
                 onChangeConfiguration = onChangeConfiguration,
-                onShowMessage = onShowMessage
+                onShowMessage = onShowMessage,
+                toExit = { onExit() }
             )
         }
     }

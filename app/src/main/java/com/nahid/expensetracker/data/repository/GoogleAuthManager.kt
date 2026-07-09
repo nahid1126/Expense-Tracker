@@ -1,6 +1,7 @@
 package com.nahid.expensetracker.data.repository
 
 import android.content.Context
+import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -51,6 +52,14 @@ class GoogleAuthManager(
         } catch (e: Exception) {
             Logger.log("GoogleAuthManager", "Unexpected error: ${e.message}")
             null
+        }
+    }
+
+    suspend fun logout() {
+        try {
+            credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        } catch (e: Exception) {
+            Logger.log("GoogleAuthManager", "Error clearing credential state: ${e.message}")
         }
     }
 }

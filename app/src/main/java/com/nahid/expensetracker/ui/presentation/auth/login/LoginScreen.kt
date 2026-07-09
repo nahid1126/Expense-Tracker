@@ -57,7 +57,6 @@ fun LoginScreen(
     onShowMessage: (String) -> Unit,
     viewModel: LoginViewModel = koinViewModel(),
 ) {
-    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
@@ -136,7 +135,7 @@ fun LoginScreen(
             if (!state.isLoading) {
                 ElevatedButton(
                     onClick = {
-                        viewModel.googleLogin(context)
+                        viewModel.googleLogin()
                     },
                     colors = ButtonDefaults.elevatedButtonColors(
                         White

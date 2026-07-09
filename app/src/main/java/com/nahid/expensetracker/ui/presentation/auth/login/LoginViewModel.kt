@@ -24,6 +24,7 @@ private const val TAG = "LoginViewModel"
 class LoginViewModel(
     private val authRepository: AuthRepository,
     private val appPreference: AppPreference,
+    private val googleAuthManager: GoogleAuthManager
 ) :
     ViewModel() {
 
@@ -43,10 +44,10 @@ class LoginViewModel(
         }
     }
 
-    fun googleLogin(context: Context) {
+    fun googleLogin() {
         updateUiState(uiState.value.copy(isLoading = true))
         viewModelScope.launch {
-            val idToken = GoogleAuthManager(context).signIn()
+            val idToken = googleAuthManager.signIn()
             if (idToken != null) {
                 val result = authRepository.signInWithGoogle(idToken)
                 when (result) {

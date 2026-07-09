@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.nahid.expensetracker.core.AppConstants
 import com.nahid.expensetracker.data.local.AppPreference
+import com.nahid.expensetracker.data.repository.GoogleAuthManager
 import org.koin.dsl.module
 
 val appModule = module {
@@ -16,5 +17,9 @@ val appModule = module {
 
     single {
         AppPreference(get())
+    }
+
+    single {
+        GoogleAuthManager(get())
     }
 }

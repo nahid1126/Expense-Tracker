@@ -55,17 +55,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.nahid.expensetracker.core.AppConstants
 import com.nahid.expensetracker.core.AppSpacing
-import com.nahid.expensetracker.core.utils.extension.toFormat
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
 import com.nahid.expensetracker.ui.presentation.navigation.Destinations
 import com.nahid.expensetracker.ui.presentation.navigation.NavGraph
+import com.nahid.expensetracker.ui.theme.Blue
+import com.nahid.expensetracker.ui.theme.DarkGreen
 import com.nahid.expensetracker.ui.theme.ExpenseTrackerTheme
 import com.nahid.expensetracker.ui.theme.Typography
-import com.nahid.expensetracker.ui.theme.WarningOrange
+import com.nahid.expensetracker.ui.theme.Zinc
 import org.koin.compose.viewmodel.koinViewModel
 
-private var keepSplash = false
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,7 +91,7 @@ fun App(
     val context = LocalContext.current
     val currentRoute = currentBackStack?.destination?.route
     val snackBarHostState = remember { SnackbarHostState() }
-    val currentUser = uiState.user
+    val gmail = uiState.gmail
 
     val greeting = remember {
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
@@ -165,7 +165,7 @@ fun App(
                 TopAppBar(
                     title = {
                         val title = uiState.uiConfig.title
-                        val dateTitle = uiState.uiConfig.dateTitle.ifEmpty { System.currentTimeMillis().toFormat("MMM dd, yyyy") }
+                        //val dateTitle = uiState.uiConfig.dateTitle.ifEmpty { System.currentTimeMillis().toFormat("MMM dd, yyyy") }
                         val subTitle = uiState.uiConfig.subTitle
                         Column {
                             if (title.contains("Home")) {
@@ -182,13 +182,17 @@ fun App(
                                 Spacer(modifier = Modifier.size(AppSpacing.Size.md))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        "${currentUser?.role?:""}, ${currentUser?.userName}",
+                                        gmail ?: "test@gmail.com",
                                         style = Typography.titleLarge.copy(
                                             fontWeight = FontWeight.Bold
                                         ),
                                         modifier = Modifier.padding(end = AppSpacing.Size.sm),
                                     )
-                                    Icon(Icons.Default.WavingHand,contentDescription = null, tint = WarningOrange)
+                                    Icon(
+                                        Icons.Default.WavingHand,
+                                        contentDescription = null,
+                                        tint = DarkGreen
+                                    )
                                 }
                             } else {
                                 Spacer(modifier = Modifier.size(AppSpacing.Size.md))
@@ -211,23 +215,23 @@ fun App(
                                 )
                             }
 
-                            if (uiState.uiConfig.showDateTitle) {
+                            /*if (uiState.uiConfig.showDateTitle) {
                                 Spacer(modifier = Modifier.size(AppSpacing.Size.sm))
                                 Text(
                                     dateTitle,
                                     style = Typography.titleMedium.copy(),
                                     modifier = Modifier.fillMaxWidth(),
                                 )
-                            }
+                            }*/
 
-                            Spacer(modifier = Modifier.size(AppSpacing.Size.md))
+                            //Spacer(modifier = Modifier.size(AppSpacing.Size.md))
 
                         }
 
 
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = MaterialTheme.colorScheme.primary,
                         titleContentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     actions = {
@@ -320,7 +324,7 @@ fun App(
         Box(Modifier.padding(innerPadding)) {
             NavGraph(
                 navController = navController,
-                currentUser = currentUser,
+                gmail = gmail,
                 onChangeConfiguration = { config ->
                     viewModel.updateUiState(
                         uiState.copy(

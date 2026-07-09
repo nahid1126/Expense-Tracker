@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -12,6 +13,7 @@ class AppPreference(private val dataStore: DataStore<Preferences>) {
     companion object {
         val TOKEN = stringPreferencesKey("token")
         val USER_ID = stringPreferencesKey("user_id")
+        val USER = stringPreferencesKey("user")
         val USER_GMAIL = stringPreferencesKey("user_gmail")
         val USER_NAME = stringPreferencesKey("user_name")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
@@ -104,6 +106,16 @@ class AppPreference(private val dataStore: DataStore<Preferences>) {
     fun getHasLocation(): Flow<Boolean> {
         return dataStore.data.map {
             it[HAS_LOCATION] ?: false
+        }
+    }
+
+    suspend fun clearAll() {
+        dataStore.edit {
+            it.remove(USER_ID)
+            it.remove(USER_GMAIL)
+            it.remove(USER_NAME)
+            it.remove(TOKEN)
+            it.remove(REFRESH_TOKEN)
         }
     }
 }

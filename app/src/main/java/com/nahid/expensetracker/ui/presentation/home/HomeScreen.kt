@@ -1,6 +1,9 @@
 package com.nahid.expensetracker.ui.presentation.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,16 +21,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,11 +44,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nahid.expensetracker.R
+import com.nahid.expensetracker.core.AppSpacing
 import com.nahid.expensetracker.core.utils.Utils
 import com.nahid.expensetracker.data.local.entity.Expense
 import com.nahid.expensetracker.domain.model.User
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
+import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
+import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
 import com.nahid.expensetracker.ui.theme.Zinc
+import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 
 private const val TAG = "HomeScreen"
@@ -47,23 +60,94 @@ private const val TAG = "HomeScreen"
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
     onChangeConfiguration: (MainUIConfig) -> Unit,
-    user: User,
+    user: String,
     onShowMessage: (String) -> Unit,
+    toExit: () -> Unit = {},
 ) {
     val context = LocalContext.current
-    /*val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler {
         viewModel.updateUiState(state.copy(showExitDialog = true))
-    }*/
-    Surface(modifier = Modifier.fillMaxSize()) {}
+    }
+    var startAnimation by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        onChangeConfiguration(
+            state.uiConfig
+        )
+        delay(200)
+        startAnimation = true
+    }
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect {
+            when (it) {
+                is HomeUiEvent.ShowMessage -> {
+                    onShowMessage(it.message.second)
+                }
+            }
+        }
+    }
+    @Composable
+    fun dashboardEntrance(index: Int): Modifier {
+        val alpha by animateFloatAsState(
+            targetValue = if (startAnimation) 1f else 0f,
+            animationSpec = tween(
+                durationMillis = 600,
+                delayMillis = index * 100,
+                easing = FastOutSlowInEasing
+            ),
+            label = "alpha_$index"
+        )
+        val translationY by animateFloatAsState(
+            targetValue = if (startAnimation) 0f else 40f,
+            animationSpec = tween(
+                durationMillis = 600,
+                delayMillis = index * 100,
+                easing = FastOutSlowInEasing
+            ),
+            label = "translationY_$index"
+        )
+        return Modifier.graphicsLayer {
+            this.alpha = alpha
+            this.translationY = translationY
+        }
+    }
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(AppSpacing.Layout.screenPadding),
+        ) {
+            CardItem(modifier = dashboardEntrance(3),"123548","4520","187965412")
+        }
+
+        if (state.showExitDialog) {
+            ConfirmationDialog(
+                title = "Exit !",
+                message = "Are You Sure Want to Exit ?",
+                confirmText = "Exit",
+                dismissText = "Cancel",
+                onDismiss = {
+                    viewModel.updateUiState(state.copy(showExitDialog = false))
+                },
+                onConfirm = {
+                    toExit()
+                    viewModel.updateUiState(state.copy(showExitDialog = false))
+                }
+            )
+        }
+
+        if (state.isLoading) {
+            AnimatedProgressDialog()
+        }
+    }
 }
 
 @Composable
 fun CardItem(modifier: Modifier, totalBalance: String, expanse: String, income: String) {
     Column(
         modifier = modifier
-            .padding(top = 60.dp, end = 16.dp, start = 16.dp, bottom = 16.dp)
             .fillMaxWidth()
             .height(200.dp)
             .shadow(8.dp)
