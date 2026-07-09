@@ -20,12 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.WavingHand
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Logout
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -57,13 +53,12 @@ import com.nahid.expensetracker.core.AppConstants
 import com.nahid.expensetracker.core.AppSpacing
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
+import com.nahid.expensetracker.ui.presentation.component.CustomBottomNavigationBar
 import com.nahid.expensetracker.ui.presentation.navigation.Destinations
 import com.nahid.expensetracker.ui.presentation.navigation.NavGraph
-import com.nahid.expensetracker.ui.theme.Blue
 import com.nahid.expensetracker.ui.theme.DarkGreen
 import com.nahid.expensetracker.ui.theme.ExpenseTrackerTheme
 import com.nahid.expensetracker.ui.theme.Typography
-import com.nahid.expensetracker.ui.theme.Zinc
 import org.koin.compose.viewmodel.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -235,17 +230,23 @@ fun App(
                         titleContentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     actions = {
-                        if (uiState.uiConfig.showOptionMenu) {
-                            Row {
+                        IconButton(onClick = {
+                            viewModel.updateUiState(
+                                uiState.copy(
+                                    showLogoutDialog = true
+                                )
+                            )
+                        }) {
+                            Icon(
+                                Icons.Default.Logout,
+                                contentDescription = null,
+                                tint = White
+                            )
+                        }
+                        /* if (uiState.uiConfig.showOptionMenu) {
+                             Row {
 
-                                Box {
-                                    IconButton(onClick = { expanded = !expanded }) {
-                                        Icon(
-                                            Icons.Default.MoreVert,
-                                            contentDescription = null,
-                                            tint = White
-                                        )
-                                    }
+                                 *//*Box {
                                     DropdownMenu(
                                         expanded = expanded,
                                         onDismissRequest = { expanded = false }
@@ -281,14 +282,14 @@ fun App(
                                             }
                                         )
                                     }
-                                }
+                                }*//*
                             }
                         } else {
                             Row(verticalAlignment = Alignment.CenterVertically) {
 
                             }
 
-                        }
+                        }*/
                     }, navigationIcon = {
                         if (uiState.uiConfig.showNavigation) {
                             IconButton(
@@ -318,6 +319,29 @@ fun App(
                 )
             }
 
+        },
+        bottomBar = {
+            val showBottomBar = currentRoute?.let { route ->
+                listOf("Home", "Stats", "Wallet", "Profile").any { route.contains(it) }
+            } ?: false
+
+            if (showBottomBar) {
+                CustomBottomNavigationBar(
+                    currentRoute = currentRoute,
+                    onItemClick = { destination ->
+                        navController.navigate(destination) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onFabClick = {
+                        navController.navigate(Destinations.AddTransaction)
+                    }
+                )
+            }
         },
     ) { innerPadding ->
 

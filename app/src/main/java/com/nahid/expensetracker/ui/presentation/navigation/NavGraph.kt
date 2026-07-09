@@ -106,6 +106,22 @@ private fun NavGraphBuilder.homeGraph(
             )
         }
     }
+
+    composable<Destinations.Stats> {
+        // Placeholder for Stats
+    }
+
+    composable<Destinations.Wallet> {
+        // Placeholder for Wallet
+    }
+
+    composable<Destinations.Profile> {
+        // Placeholder for Profile
+    }
+
+    composable<Destinations.AddTransaction> {
+        // Placeholder for Add Transaction
+    }
 }
 
 

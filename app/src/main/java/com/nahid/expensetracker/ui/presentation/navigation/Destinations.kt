@@ -11,6 +11,18 @@ sealed class Destinations {
     data object Home :Destinations()
 
     @Serializable
+    data object Stats :Destinations()
+
+    @Serializable
+    data object Wallet :Destinations()
+
+    @Serializable
+    data object Profile :Destinations()
+
+    @Serializable
+    data object AddTransaction :Destinations()
+
+    @Serializable
     data object AboutApp :Destinations()
 
     @Serializable

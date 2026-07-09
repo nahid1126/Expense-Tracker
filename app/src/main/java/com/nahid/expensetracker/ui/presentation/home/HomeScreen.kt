@@ -58,8 +58,11 @@ import com.nahid.expensetracker.data.local.entity.Expense
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
+import com.nahid.expensetracker.ui.theme.Black
 import com.nahid.expensetracker.ui.theme.DarkGreen
+import com.nahid.expensetracker.ui.theme.Gray
 import com.nahid.expensetracker.ui.theme.RedFox
+import com.nahid.expensetracker.ui.theme.Typography
 import com.nahid.expensetracker.ui.theme.Zinc
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
@@ -129,6 +132,26 @@ fun HomeScreen(
                 .padding(AppSpacing.Layout.screenPadding),
         ) {
             BalanceCardView(dashboardEntrance(3))
+            Spacer(Modifier.height(AppSpacing.Size.md))
+            Row(
+                modifier = dashboardEntrance(2)
+                    .fillMaxWidth()
+                    .padding(AppSpacing.Size.md),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Transections", style = Typography.titleMedium.copy(
+                        color = Black,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+                Text(
+                    "See All", style = Typography.bodyLarge.copy(
+                        color = Gray,
+                        fontWeight = FontWeight.Normal
+                    )
+                )
+            }
         }
 
         if (state.showExitDialog) {
@@ -166,7 +189,7 @@ fun BalanceCardView(modifier: Modifier) {
             .fillMaxWidth()
             .height(200.dp),
         shape = RoundedCornerShape(28.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = AppSpacing.Size.sm)
     ) {
         Column(
             modifier = modifier
