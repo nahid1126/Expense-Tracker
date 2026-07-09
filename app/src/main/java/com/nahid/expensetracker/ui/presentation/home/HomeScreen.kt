@@ -128,7 +128,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(AppSpacing.Layout.screenPadding),
         ) {
-            BalanceCardView()
+            BalanceCardView(dashboardEntrance(3))
         }
 
         if (state.showExitDialog) {
@@ -154,7 +154,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun BalanceCardView() {
+fun BalanceCardView(modifier: Modifier) {
     val gradientColors = listOf(
         Color(0xFF2B5748),
         Color(0xFF9CB080),
@@ -162,21 +162,21 @@ fun BalanceCardView() {
     )
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(200.dp),
         shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .background(brush = Brush.linearGradient(colors = gradientColors))
                 .padding(24.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -185,7 +185,7 @@ fun BalanceCardView() {
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Normal
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = modifier.height(4.dp))
                 Text(
                     text = "4800.00৳",
                     color = Color.White,
@@ -195,22 +195,22 @@ fun BalanceCardView() {
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RowItem("Income", "2.500.00",Icons.Default.ArrowDownward, DarkGreen)
-                RowItem("Expenses", "800.00",Icons.Default.ArrowUpward, RedFox)
+                RowItem("Income", "2.500.00",Icons.Default.ArrowDownward, DarkGreen,modifier)
+                RowItem("Expenses", "800.00",Icons.Default.ArrowUpward, RedFox,modifier)
             }
         }
     }
 }
 
 @Composable
-fun RowItem(title: String, value: String, icon: ImageVector, color: Color) {
+fun RowItem(title: String, value: String, icon: ImageVector, color: Color, modifier: Modifier) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .size(32.dp)
                 .background(Color.White.copy(alpha = 0.2f), shape = RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
@@ -219,10 +219,10 @@ fun RowItem(title: String, value: String, icon: ImageVector, color: Color) {
                 imageVector = icon,
                 contentDescription = null,
                 tint = color,
-                modifier = Modifier.size(18.dp)
+                modifier = modifier.size(18.dp)
             )
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = modifier.width(8.dp))
         Column {
             Text(text = title, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
             Text(
