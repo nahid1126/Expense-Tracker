@@ -1,12 +1,15 @@
 package com.nahid.expensetracker.data.di
 
+import com.nahid.expensetracker.core.utils.NetworkHelper
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 private const val TAG = "NetworkModule"
 
 @OptIn(ExperimentalSerializationApi::class)
 val networkModule = module {
+    single { NetworkHelper(androidContext()) }
 /*    single<TokenManager> { TokenManagerImpl(get()) }
     single {
         HttpClient {

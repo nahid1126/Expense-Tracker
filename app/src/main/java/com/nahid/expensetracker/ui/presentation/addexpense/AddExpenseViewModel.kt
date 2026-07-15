@@ -1,47 +1,168 @@
 package com.nahid.expensetracker.ui.presentation.addexpense
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.nahid.expensetracker.core.Results
+import com.nahid.expensetracker.core.utils.extension.longToSimpleDateFormatString
 import com.nahid.expensetracker.data.local.entity.Expense
-import com.nahid.expensetracker.data.local.AppDatabase
-import com.nahid.expensetracker.data.repository.ExpenseRepository
+import com.nahid.expensetracker.domain.model.ExpenseCategory
+import com.nahid.expensetracker.domain.model.ExpenseType
+import com.nahid.expensetracker.domain.repository.ExpenseRepository
+import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 private const val TAG = "AddExpenseViewModel"
-class AddExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() {
-    val message = MutableSharedFlow<String>()
-    var finalExpense = MutableStateFlow<Expense?>(null)
-    fun addExpanse(expense: Expense, isForUpdate: Boolean) {
+
+class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : ViewModel() {
+    private val mutableUiState = MutableStateFlow(AddExpenseUiState())
+    private val mutableUiEvent = MutableSharedFlow<AddExpenseUiEvent>()
+
+    val uiState: StateFlow<AddExpenseUiState> = mutableUiState.asStateFlow()
+    val uiEvent: SharedFlow<AddExpenseUiEvent> = mutableUiEvent.asSharedFlow()
+
+    fun updateUiState(uiState: AddExpenseUiState) {
+        mutableUiState.value = uiState
+    }
+
+    fun showMessage(isSuccess: Boolean, message: String) {
         viewModelScope.launch {
-            if (expense.title.isEmpty()) {
-                message.emit("Please enter title")
-            } else if (expense.type.isEmpty()) {
-                message.emit("Please select type")
-            } else if (expense.amount.toString().trim().isEmpty()) {
-                message.emit("Please enter amount")
-            } else if (expense.category.isEmpty()) {
-                message.emit("Please select category")
-            } else if (expense.date.isEmpty()) {
-                message.emit("Please select date")
+            mutableUiEvent.emit(AddExpenseUiEvent.ShowMessage(Pair(isSuccess, message)))
+        }
+    }
+
+    init {
+        viewModelScope.launch {
+            val cat = expenseRepository.getExpCategory()
+            Log.d(TAG, "expCat: $cat")
+        }
+    }
+
+    fun getInitialData() {
+        viewModelScope.launch {
+            mutableUiState.update { it.copy(isLoading = true) }
+            val expCategory =
+                async {
+                    expenseRepository.getExpCategory()
+                }
+            val expType =
+                async {
+                    expenseRepository.getExpenseType()
+                }
+
+            val expCatResponse = expCategory.await()
+            val expTypeResponse = expType.await()
+
+            when {
+                expCatResponse is Results.Success && expTypeResponse is Results.Success -> {
+                    mutableUiState.update {
+                        it.copy(
+                            isLoading = false,
+                            expCategories = expCatResponse.data,
+                            expTypes = expTypeResponse.data
+
+                        )
+                    }
+                }
+
+                expCatResponse is Results.Error -> {
+                    mutableUiState.update {
+                        it.copy(isLoading = false)
+                    }
+                    showMessage(false, expCatResponse.exception.message)
+                }
+
+                expTypeResponse is Results.Error -> {
+                    mutableUiState.update {
+                        it.copy(isLoading = false)
+                    }
+                    showMessage(false, expTypeResponse.exception.message)
+                }
+            }
+
+        }
+    }
+
+    fun addExpense() {
+        updateUiState(uiState.value.copy(isLoading = true))
+        val mainState = uiState.value
+        viewModelScope.launch {
+            if (mainState.expTitle.isNullOrEmpty()) {
+                showMessage(false, "Expense Title Required")
+                updateUiState(uiState.value.copy(isLoading = false))
+            } else if (mainState.selectedExpType.isNullOrEmpty()) {
+                showMessage(false, "Expense Type Required")
+                updateUiState(uiState.value.copy(isLoading = false))
+            } else if (mainState.selectedExpCategory.isNullOrEmpty()) {
+                showMessage(false, "Expense Category Required")
+                updateUiState(uiState.value.copy(isLoading = false))
+            } else if (mainState.amount == 0) {
+                showMessage(false, "Expense Amount Required")
+                updateUiState(uiState.value.copy(isLoading = false))
+            } else if (mainState.selectedExpDate == 0L) {
+                showMessage(false, "Expense Date Required")
+                updateUiState(uiState.value.copy(isLoading = false))
             } else {
-                message.emit("Expense ${if (isForUpdate) "updated" else "added"} successfully")
-                if (isForUpdate) {
-                    repository.updateExpense(expense)
-                } else {
-                    repository.insertExpanse(expense)
+                val expense = Expense(
+                    id = null,
+                    title = mainState.expTitle,
+                    amount = mainState.amount,
+                    date = mainState.selectedExpDate.longToSimpleDateFormatString(),
+                    type = mainState.selectedExpType,
+                    category = mainState.selectedExpCategory
+                )
+
+                when (val result = expenseRepository.insertExpense(expense)) {
+                    is Results.Success -> {
+                        showMessage(true, "Expense added successfully")
+                        //expenseRepository.scheduleSync()
+                        updateUiState(uiState.value.copy(isLoading = false))
+                        mutableUiEvent.emit(AddExpenseUiEvent.NavigateBack)
+                    }
+
+                    is Results.Error -> {
+                        showMessage(false, "Error: ${result.exception.message}")
+                        updateUiState(uiState.value.copy(isLoading = false))
+                    }
                 }
             }
         }
     }
 
-    fun getExpenseByID(id: Int) {
+
+    /*  var finalExpense = MutableStateFlow<Expense?>(null)
+      fun addExpanse(expense: Expense, isForUpdate: Boolean) {
+          viewModelScope.launch {
+              if (expense.title.isEmpty()) {
+                  message.emit("Please enter title")
+              } else if (expense.type.isEmpty()) {
+                  message.emit("Please select type")
+              } else if (expense.amount.toString().trim().isEmpty()) {
+                  message.emit("Please enter amount")
+              } else if (expense.category.isEmpty()) {
+                  message.emit("Please select category")
+              } else if (expense.date.isEmpty()) {
+                  message.emit("Please select date")
+              } else {
+                  message.emit("Expense ${if (isForUpdate) "updated" else "added"} successfully")
+                  if (isForUpdate) {
+                      repository.updateExpense(expense)
+                  } else {
+                      repository.insertExpanse(expense)
+                  }
+              }
+          }
+      }*/
+
+    /*fun getExpenseByID(id: Int) {
         val expense = repository.getExpenseByID(id).stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(), null
         )
@@ -53,5 +174,31 @@ class AddExpenseViewModel(private val repository: ExpenseRepository) : ViewModel
                 }
             }
         }
-    }
+    }*/
 }
+
+sealed interface AddExpenseUiEvent {
+    data class ShowMessage(val message: Pair<Boolean, String>) : AddExpenseUiEvent
+    data object NavigateBack : AddExpenseUiEvent
+}
+
+data class AddExpenseUiState(
+    val isDarkMode: Boolean = false,
+    val isLoading: Boolean = false,
+    val expTitle: String? = null,
+    val showExpDatePicker: Boolean = false,
+    val selectedExpDate: Long = 0L,
+    val selectedExpType: String? = null,
+    val selectedExpTypeId: Long = 0,
+    var amount: Int = 0,
+    val selectedExpCategory: String? = null,
+    val selectedExpCategoryId: Long = 0,
+    val expCategories: List<ExpenseCategory> = arrayListOf(),
+    val expTypes: List<ExpenseType> = arrayListOf(),
+    val uiConfig: MainUIConfig = MainUIConfig(
+        title = "Add Expense",
+        showTopBar = true,
+        showNavigation = true,
+        showSubTitle = false
+    ),
+)

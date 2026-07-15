@@ -24,12 +24,18 @@ interface ExpenseDao {
     @Query("SELECT * FROM Expense where type ='Expense' ORDER BY amount DESC LIMIT 5 ")
     fun getAllTopExpense(): Flow<List<Expense>>
 
+    @Query("SELECT * FROM Expense ORDER BY amount DESC LIMIT 5 ")
+    fun getLastFiveExpense(): Flow<List<Expense>>
+
     @Update
     suspend fun updateExpense(expense: Expense)
 
-    @Delete
-    suspend fun deleteExpense(expense: Expense)
+    @Query("DELETE FROM expense")
+    suspend fun deleteExpense()
 
     @Query("SELECT type, date, SUM(amount) AS total_amount FROM Expense where type = :type GROUP BY type, date ORDER BY date")
     fun getAllExpenseByDate(type: String = "Expense"): Flow<List<ExpenseSummary>>
+
+    @Query("SELECT * FROM Expense WHERE isSynced = 0")
+    suspend fun getUnsyncedExpenses(): List<Expense>
 }

@@ -18,8 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -33,7 +31,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.nahid.expensetracker.ui.presentation.navigation.Destinations
 import com.nahid.expensetracker.ui.theme.Gray
-import com.nahid.expensetracker.ui.theme.PurpleSageBush
 
 @Composable
 fun CustomBottomNavigationBar(
@@ -44,14 +41,10 @@ fun CustomBottomNavigationBar(
     val activeColor = Color(0xFF2B5748)
     val inactiveColor = Gray // Grayish like in image
 
-    val leftItems = listOf(
-        BottomNavItem(Destinations.Home, Icons.Default.Home, "Home"),
-        BottomNavItem(Destinations.Stats, Icons.Default.BarChart, "Stats")
-    )
-    val rightItems = listOf(
-        BottomNavItem(Destinations.Wallet, Icons.Default.Wallet, "Wallet"),
-        BottomNavItem(Destinations.Profile, Icons.Default.Person, "Profile")
-    )
+    val leftItem = BottomNavItem(Destinations.Home, Icons.Default.Home, "Home")
+
+    val rightItem = BottomNavItem(Destinations.Transections, Icons.Default.BarChart, "Transections")
+
 
     Box(
         modifier = Modifier
@@ -62,7 +55,7 @@ fun CustomBottomNavigationBar(
         // Main Bar with Shadow
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(.6f)
                 .height(70.dp)
                 .align(Alignment.BottomCenter)
                 .shadow(
@@ -83,30 +76,30 @@ fun CustomBottomNavigationBar(
             ) {
                 // Left Items
                 Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    leftItems.forEach { item ->
-                        NavBarIcon(
-                            item = item,
-                            isSelected = currentRoute?.contains(item.destination::class.simpleName ?: "") == true,
-                            activeColor = activeColor,
-                            inactiveColor = inactiveColor,
-                            onClick = { onItemClick(item.destination) }
-                        )
-                    }
+                    NavBarIcon(
+                        item = leftItem,
+                        isSelected = currentRoute?.contains(
+                            leftItem.destination::class.simpleName ?: ""
+                        ) == true,
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor,
+                        onClick = { onItemClick(leftItem.destination) }
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(70.dp))
 
                 // Right Items
                 Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    rightItems.forEach { item ->
-                        NavBarIcon(
-                            item = item,
-                            isSelected = currentRoute?.contains(item.destination::class.simpleName ?: "") == true,
-                            activeColor = activeColor,
-                            inactiveColor = inactiveColor,
-                            onClick = { onItemClick(item.destination) }
-                        )
-                    }
+                    NavBarIcon(
+                        item = rightItem,
+                        isSelected = currentRoute?.contains(
+                            rightItem.destination::class.simpleName ?: ""
+                        ) == true,
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor,
+                        onClick = { onItemClick(rightItem.destination) }
+                    )
                 }
             }
         }

@@ -14,4 +14,25 @@ data class Expense(
     val date: String,
     val type: String,
     val category: String,
+    val isSynced: Boolean = false,
+)
+
+fun Expense.toDomain() = Expense(
+    id = id,
+    title = title,
+    amount = amount,
+    date = date,
+    type = type,
+    category = category,
+    isSynced = isSynced
+)
+
+fun Expense.toEntity() = Expense(
+    id = id,
+    title = title,
+    amount = amount,
+    date = date,
+    type = type,
+    category = category,
+    isSynced = isSynced
 )

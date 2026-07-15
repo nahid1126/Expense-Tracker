@@ -6,9 +6,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,7 +61,6 @@ import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
 import com.nahid.expensetracker.ui.presentation.component.CustomBottomNavigationBar
 import com.nahid.expensetracker.ui.presentation.navigation.Destinations
 import com.nahid.expensetracker.ui.presentation.navigation.NavGraph
-import com.nahid.expensetracker.ui.theme.DarkGreen
 import com.nahid.expensetracker.ui.theme.ExpenseTrackerTheme
 import com.nahid.expensetracker.ui.theme.Purple40
 import com.nahid.expensetracker.ui.theme.Typography
@@ -231,18 +235,20 @@ fun App(
                         titleContentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     actions = {
-                        IconButton(onClick = {
-                            viewModel.updateUiState(
-                                uiState.copy(
-                                    showLogoutDialog = true
+                        if (uiState.uiConfig.showOptionMenu) {
+                            IconButton(onClick = {
+                                viewModel.updateUiState(
+                                    uiState.copy(
+                                        showLogoutDialog = true
+                                    )
                                 )
-                            )
-                        }) {
-                            Icon(
-                                Icons.Default.Logout,
-                                contentDescription = null,
-                                tint = White
-                            )
+                            }) {
+                                Icon(
+                                    Icons.Default.Logout,
+                                    contentDescription = null,
+                                    tint = White
+                                )
+                            }
                         }
                         /* if (uiState.uiConfig.showOptionMenu) {
                              Row {
@@ -323,10 +329,18 @@ fun App(
         },
         bottomBar = {
             val showBottomBar = currentRoute?.let { route ->
-                listOf("Home", "Stats", "Wallet", "Profile").any { route.contains(it) }
+                listOf("Home", "Wallet", "Profile").any { route.contains(it) }
             } ?: false
 
-            if (showBottomBar) {
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = slideInVertically(
+                    initialOffsetY = { it }
+                ) + fadeIn(),
+                exit = slideOutVertically(
+                    targetOffsetY = { it }
+                ) + fadeOut()
+            ) {
                 CustomBottomNavigationBar(
                     currentRoute = currentRoute,
                     onItemClick = { destination ->
@@ -339,7 +353,7 @@ fun App(
                         }
                     },
                     onFabClick = {
-                        navController.navigate(Destinations.AddTransaction)
+                        navController.navigate(Destinations.AddExpense)
                     }
                 )
             }

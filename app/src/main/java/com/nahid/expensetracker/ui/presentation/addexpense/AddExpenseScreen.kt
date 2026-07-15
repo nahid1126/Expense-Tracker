@@ -4,26 +4,41 @@ package com.nahid.expensetracker.ui.presentation.addexpense
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CurrencyLira
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -43,227 +59,206 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nahid.expensetracker.R
+import com.nahid.expensetracker.core.AppConstants
+import com.nahid.expensetracker.core.AppSpacing
 import com.nahid.expensetracker.core.utils.Utils
+import com.nahid.expensetracker.core.utils.extension.longToSimpleDateFormatString
 import com.nahid.expensetracker.data.local.entity.Expense
+import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
+import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
+import com.nahid.expensetracker.ui.presentation.component.CustomDatePickerDialog
+import com.nahid.expensetracker.ui.presentation.component.QuestionSelection
+import com.nahid.expensetracker.ui.presentation.component.input_field.StandardInputField
+import com.nahid.expensetracker.ui.presentation.component.input_field.textFieldColors
+import com.nahid.expensetracker.ui.theme.PurpleGrey80
 import com.nahid.expensetracker.ui.theme.Zinc
+import org.koin.compose.viewmodel.koinViewModel
 
 private const val TAG = "AddExpanseScreen"
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun AddExpenseScreen() {
+fun AddExpenseScreen(
+    viewModel: AddExpenseViewModel = koinViewModel(),
+    onChangeConfiguration: (MainUIConfig) -> Unit,
+    onShowMessage: (String) -> Unit,
+    onBack: () -> Unit
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-
-    Surface(modifier = Modifier.fillMaxSize()) {}
-}
-
-
-@SuppressLint("CoroutineCreationDuringComposition")
-@Composable
-fun DataForm(modifier: Modifier, viewModel: AddExpenseViewModel, expense: Expense?) {
-    val context = LocalContext.current
-    val expanseName = remember {
-        mutableStateOf("")
+    LaunchedEffect(Unit) {
+        onChangeConfiguration(
+            state.uiConfig
+        )
+        viewModel.getInitialData()
+        // delay(200)
+        //startAnimation = true
     }
-    val amount = remember {
-        mutableStateOf("")
-    }
-    val expanseTypes = listOf("Income", "Expense")
-    val category = listOf("Salary", "Basa", "Kalamoni", "Transport", "Others")
-    var selectedExpenseCategory by remember {
-        mutableStateOf("")
-    }
-    var selectedExpenseType by remember {
-        mutableStateOf("")
-    }
-    val expenseDate = remember {
-        mutableStateOf("")
-    }
-    val showDatePicker = remember { mutableStateOf(false) }
-    Log.d(TAG, "DataForm: $expense")
-    val updatedExpense = rememberUpdatedState(expense)
-    var isFromUpdate by remember { mutableStateOf(false) }
-    LaunchedEffect(expense) {
-        updatedExpense.value?.let {
-            expanseName.value = it.title
-            amount.value = it.amount.toString()
-            selectedExpenseType = it.type
-            selectedExpenseCategory = it.category
-            expenseDate.value = it.date
-            isFromUpdate = true
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect {
+            when (it) {
+                is AddExpenseUiEvent.ShowMessage -> {
+                    onShowMessage(it.message.second)
+                }
+                AddExpenseUiEvent.NavigateBack-> {
+                    onBack()
+                }
+            }
         }
     }
-    Column(
-        modifier = modifier
-            .padding(16.dp)
-            .fillMaxWidth()
-            .shadow(8.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-
-        Spacer(modifier = Modifier.size(8.dp))
-
-        OutlinedTextField(
-            value = expanseName.value,
-            singleLine = true,
-            onValueChange = {
-            expanseName.value = it
-        }, label = {
-            Text(text = "Enter Expense Title")
-        }, modifier = Modifier.fillMaxWidth())
-
-        Spacer(modifier = Modifier.size(8.dp))
-
-        DropDownMenu(
-            listOfItems = expanseTypes,
-            "Select Expense Type",
-            selectedExpenseType,
-            onItemSelected = { selectedExpenseType = it })
-
-        Spacer(modifier = Modifier.size(8.dp))
-
-        OutlinedTextField(
-            value = amount.value,
-            singleLine = true,
-            onValueChange = { amount.value = it },
-            label = {
-                Text(text = "Enter Expense Amount")
-            },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-
-        Spacer(modifier = Modifier.size(8.dp))
-        DropDownMenu(
-            listOfItems = category,
-            "Select Expense Category",
-            selectedExpenseCategory,
-            onItemSelected = { selectedExpenseCategory = it })
-
-        Spacer(modifier = Modifier.size(8.dp))
-
-        OutlinedTextField(
-            value = expenseDate.value,
-            onValueChange = { expenseDate.value = it },
-            label = {
-                Text(text = "Select Date")
-            }, modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDatePicker.value = true }, enabled = false
-        )
-
-        Spacer(modifier = Modifier.size(8.dp))
-
-        Button(
-            onClick = {
-                val finalExpense = Expense(
-                    updatedExpense.value?.id,
-                    expanseName.value,
-                    amount.value.trim().toIntOrNull() ?: 0,
-                    expenseDate.value,
-                    selectedExpenseType,
-                    selectedExpenseCategory
-                )
-                viewModel.addExpanse(finalExpense, isFromUpdate)
-                Log.d(
-                    TAG,
-                    "DataForm:$isFromUpdate ${expanseName.value}, ${amount.value}, ${selectedExpenseType}, ${selectedExpenseCategory}, ${expenseDate.value}"
-                )
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Zinc),
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(4.dp))
+                .fillMaxSize()
+                .padding(AppSpacing.Layout.screenPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(text = "Add Expense", fontSize = 14.sp, color = Color.White)
-        }
-
-    }
-    if (showDatePicker.value) {
-        ExpenseDatePicker(
-            onDateSelected = { date ->
-                expenseDate.value = Utils.formatDate(date)
-                showDatePicker.value = false
-            },
-            onDismiss = { showDatePicker.value = false }
-        )
-    }
-}
-
-
-@Composable
-fun ExpenseDatePicker(
-    onDateSelected: (date: Long) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val datePickerState = rememberDatePickerState()
-    val selectedDate = datePickerState.selectedDateMillis ?: 0L
-    DatePickerDialog(
-        onDismissRequest = { onDismiss() },
-        confirmButton = {
-            TextButton(onClick = { onDateSelected(selectedDate) }) {
-                Text(text = "Confirm")
+            Box(
+                modifier = Modifier
+                    .size(250.dp)
+                    .clip(CircleShape)
+                    .background(PurpleGrey80.copy(alpha = 0.4f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.add_exp),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(200.dp)
+                )
             }
-        },
-        dismissButton = {
-            TextButton(onClick = { onDismiss() }) {
-                Text(text = "Cancel")
-            }
-        }) {
-        DatePicker(state = datePickerState)
-    }
-}
 
-@Composable
-fun DropDownMenu(
-    listOfItems: List<String>,
-    hintText: String,
-    previousValue: String?,
-    onItemSelected: (item: String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf("") }
-    var textFieldSize by remember { mutableStateOf(Size.Zero) }
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-    ) {
-        OutlinedTextField(
-            value = previousValue ?: selectedText,
-            singleLine = true,
-            onValueChange = { selectedText = it },
-            readOnly = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            label = {
-                Text(text = hintText)
-            },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-                .onGloballyPositioned { textFieldSize = it.size.toSize() }
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            listOfItems.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(text = item) },
+            StandardInputField(
+                value = state.expTitle ?: "",
+                onValueChange = {
+                    viewModel.updateUiState(state.copy(expTitle = it))
+                },
+                label = "Expense Title", placeholder = "Gari vara",
+                singleLine = true,
+                leadingIcon = Icons.Default.Title
+            )
+            Spacer(Modifier.height(AppSpacing.Size.md))
+            QuestionSelection(
+                modifier = Modifier.padding(horizontal = AppSpacing.Size.md),
+                options = state.expTypes,
+                textValue = state.selectedExpType ?: "",
+                onItemSelection = {
+                    viewModel.updateUiState(
+                        state.copy(
+                            selectedExpType = it.name,
+                            selectedExpTypeId = it.id
+                        )
+                    )
+                },
+                getLabel = { it.name },
+                textLabel = "Expense Type",
+            )
+            Spacer(Modifier.height(AppSpacing.Size.sm))
+            QuestionSelection(
+                modifier = Modifier.padding(horizontal = AppSpacing.Size.md),
+                options = state.expCategories,
+                textValue = state.selectedExpCategory ?: "",
+                onItemSelection = {
+                    viewModel.updateUiState(
+                        state.copy(
+                            selectedExpCategory = it.name,
+                            selectedExpCategoryId = it.id
+                        )
+                    )
+                },
+                getLabel = { it.name },
+                textLabel = "Expense Category",
+            )
+            Spacer(Modifier.height(AppSpacing.Size.md))
+            //var amount by remember { mutableStateOf(if (state.amount == 0.0) "" else state.amount.toString()) }
+
+            StandardInputField(
+                value = if (state.amount == 0) "" else state.amount.toString(),
+                onValueChange = {
+                    viewModel.updateUiState(state.copy(amount = it.toInt()))
+                },
+                label = "Amount(৳)", placeholder = "1xxxx",
+                singleLine = true,
+                leadingIcon = Icons.Default.CurrencyLira,
+                keyboardType = KeyboardType.Number
+            )
+            Spacer(Modifier.height(AppSpacing.Size.md))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AppSpacing.Size.sm)
+                    .border(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary,
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    .clickable {
+                        viewModel.updateUiState(state.copy(showExpDatePicker = true))
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    if (state.selectedExpDate != 0L) {
+                        state.selectedExpDate.longToSimpleDateFormatString()
+                    } else {
+                        "Expense Date"
+
+                    },
+                    style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.padding((AppConstants.APP_MARGIN + 4).dp)
+                )
+
+                Icon(
+                    imageVector = Icons.Default.CalendarMonth,
+                    tint = MaterialTheme.colorScheme.primary,
+                    contentDescription = "Expense Date",
+                    modifier = Modifier.padding(end = AppConstants.APP_MARGIN.dp)
+                )
+            }
+            Spacer(Modifier.height(AppSpacing.Size.xxl))
+            if (!state.isLoading) {
+                ElevatedButton(
                     onClick = {
-                        selectedText = item
-                        onItemSelected(selectedText)
-                        expanded = false
+                        viewModel.addExpense()
+                    }, colors = ButtonDefaults.elevatedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AppSpacing.Size.md)
+                ) {
+                    Text("Submit")
+                }
 
-                    }
-                )
             }
+        }
+        if (state.showExpDatePicker) {
+            CustomDatePickerDialog(
+                confirmText = "Ok",
+                dismissText = "Cancel", onDismiss = {
+                    viewModel.updateUiState(
+                        state.copy(showExpDatePicker = false)
+                    )
+                }, onConfirm = {
+                    viewModel.updateUiState(
+                        state.copy(
+                            showExpDatePicker = false,
+                            selectedExpDate = it
+                        )
+                    )
+                })
+        }
+        if (state.isLoading) {
+            AnimatedProgressDialog()
         }
     }
 }

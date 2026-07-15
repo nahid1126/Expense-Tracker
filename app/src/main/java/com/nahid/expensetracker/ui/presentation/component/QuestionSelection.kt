@@ -45,11 +45,11 @@ fun <T> QuestionSelection(
             },
             label = {
                 Text(
-                    text = textValue ?: textLabel,
+                    text = if (textValue.isNullOrEmpty()) textLabel else textValue,
                     modifier = Modifier.padding(vertical = AppSpacing.Layout.cardPadding),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Normal,
-                        color = if (textValue != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (!textValue.isNullOrEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             },

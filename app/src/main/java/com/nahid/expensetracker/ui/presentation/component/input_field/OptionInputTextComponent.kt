@@ -96,12 +96,12 @@ fun OptionInputTextComponent(question: InputQuestion, onAnswerChange: (String) -
 @Composable
 fun textFieldColors(): TextFieldColors {
     return OutlinedTextFieldDefaults.colors(
-        focusedTextColor = MaterialTheme.colorScheme.tertiary,
-        unfocusedTextColor = MaterialTheme.colorScheme.primary,
-        focusedBorderColor = MaterialTheme.colorScheme.background,
-        unfocusedBorderColor = MaterialTheme.colorScheme.background,
-        focusedLabelColor = MaterialTheme.colorScheme.tertiary,
-        unfocusedLabelColor = MaterialTheme.colorScheme.primary,
+        focusedTextColor = MaterialTheme.colorScheme.primary,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
+        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
         cursorColor = MaterialTheme.colorScheme.primary
     )
 }

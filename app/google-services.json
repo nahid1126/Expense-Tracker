@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "447605416637-fgck1gbhmmtecnjctsi86940naki89q7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nahid.expensetracker",
+            "certificate_hash": "c35db6c5cfe09691fc0a1891f1856b3b4c10bd3f"
+          }
+        },
+        {
           "client_id": "447605416637-ckeujgaavdn7frnigrd0g2745vqjc5qa.apps.googleusercontent.com",
           "client_type": 3
         }

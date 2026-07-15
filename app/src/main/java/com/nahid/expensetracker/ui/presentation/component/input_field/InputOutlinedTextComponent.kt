@@ -3,16 +3,21 @@ package com.nahid.expensetracker.ui.presentation.component.input_field
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.nahid.expensetracker.core.AppConstants
+import com.nahid.expensetracker.core.AppSpacing
 import com.nahid.expensetracker.core.utils.extension.checkInputType
 import com.nahid.expensetracker.core.utils.extension.equalIgnoreCase
 
@@ -69,6 +74,41 @@ fun InputOutlinedTextComponent(question: InputQuestion, onAnswerChange: (String)
 
 
 
+}
+@Composable
+fun StandardInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    leadingIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    imeAction: ImeAction = ImeAction.Next,
+    singleLine: Boolean = true,
+    minLines: Int = 1
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        leadingIcon = {
+            Icon(
+                leadingIcon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        singleLine = singleLine,
+        minLines = minLines,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = AppSpacing.Size.md),
+        shape = RoundedCornerShape(AppSpacing.Size.md),
+        colors = textFieldColors(),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction
+        )
+    )
 }
 
 

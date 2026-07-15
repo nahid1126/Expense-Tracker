@@ -11,7 +11,7 @@ sealed class Destinations {
     data object Home :Destinations()
 
     @Serializable
-    data object Stats :Destinations()
+    data object Transections :Destinations()
 
     @Serializable
     data object Wallet :Destinations()
@@ -20,7 +20,7 @@ sealed class Destinations {
     data object Profile :Destinations()
 
     @Serializable
-    data object AddTransaction :Destinations()
+    data object AddExpense :Destinations()
 
     @Serializable
     data object AboutApp :Destinations()

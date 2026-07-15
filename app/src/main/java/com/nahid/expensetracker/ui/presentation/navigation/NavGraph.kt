@@ -11,11 +11,12 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.nahid.expensetracker.domain.model.User
-import com.nahid.expensetracker.ui.presentation.auth.login.LoginScreen
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
+import com.nahid.expensetracker.ui.presentation.addexpense.AddExpenseScreen
+import com.nahid.expensetracker.ui.presentation.auth.login.LoginScreen
 import com.nahid.expensetracker.ui.presentation.auth.splash.SplashScreen
 import com.nahid.expensetracker.ui.presentation.home.HomeScreen
+import com.nahid.expensetracker.ui.presentation.transections.TransectionsScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -107,8 +108,11 @@ private fun NavGraphBuilder.homeGraph(
         }
     }
 
-    composable<Destinations.Stats> {
-        // Placeholder for Stats
+    composable<Destinations.Transections> {
+        TransectionsScreen(
+            onChangeConfiguration = onChangeConfiguration,
+            onShowMessage = onShowMessage
+        )
     }
 
     composable<Destinations.Wallet> {
@@ -119,8 +123,12 @@ private fun NavGraphBuilder.homeGraph(
         // Placeholder for Profile
     }
 
-    composable<Destinations.AddTransaction> {
-        // Placeholder for Add Transaction
+    composable<Destinations.AddExpense> {
+        AddExpenseScreen(
+            onChangeConfiguration = onChangeConfiguration,
+            onShowMessage = onShowMessage, onBack = {
+                navController.navigateUp()
+            })
     }
 }
 

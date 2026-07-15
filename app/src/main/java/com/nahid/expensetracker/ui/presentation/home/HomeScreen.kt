@@ -1,5 +1,6 @@
 package com.nahid.expensetracker.ui.presentation.home
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -24,8 +25,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -66,6 +77,10 @@ import com.nahid.expensetracker.ui.theme.Typography
 import com.nahid.expensetracker.ui.theme.Zinc
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 private const val TAG = "HomeScreen"
 @Composable
@@ -131,7 +146,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(AppSpacing.Layout.screenPadding),
         ) {
-            BalanceCardView(dashboardEntrance(3))
+            BalanceCardView(dashboardEntrance(3), state)
             Spacer(Modifier.height(AppSpacing.Size.md))
             Row(
                 modifier = dashboardEntrance(2)
@@ -152,6 +167,8 @@ fun HomeScreen(
                     )
                 )
             }
+            Spacer(Modifier.height(AppSpacing.Size.md))
+            TransactionList(list = state.topExpenseList)
         }
 
         if (state.showExitDialog) {
@@ -177,7 +194,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun BalanceCardView(modifier: Modifier) {
+fun BalanceCardView(modifier: Modifier, state: HomeUiState) {
     val gradientColors = listOf(
         Color(0xFF2B5748),
         Color(0xFF9CB080),
@@ -210,7 +227,7 @@ fun BalanceCardView(modifier: Modifier) {
                 )
                 Spacer(modifier = modifier.height(4.dp))
                 Text(
-                    text = "4800.00৳",
+                    text = "৳${state.totalBalance}",
                     color = Color.White,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold
@@ -222,8 +239,8 @@ fun BalanceCardView(modifier: Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RowItem("Income", "2.500.00",Icons.Default.ArrowDownward, DarkGreen,modifier)
-                RowItem("Expenses", "800.00",Icons.Default.ArrowUpward, RedFox,modifier)
+                RowItem("Income", state.totalIncome.toString(),Icons.Default.ArrowDownward, DarkGreen,modifier)
+                RowItem("Expenses", state.totalExpense.toString(),Icons.Default.ArrowUpward, RedFox,modifier)
             }
         }
     }
@@ -249,7 +266,7 @@ fun RowItem(title: String, value: String, icon: ImageVector, color: Color, modif
         Column {
             Text(text = title, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
             Text(
-                text = "${value}৳",
+                text = "৳$value",
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
@@ -259,72 +276,129 @@ fun RowItem(title: String, value: String, icon: ImageVector, color: Color, modif
 }
 
 @Composable
-fun TransactionList(
-    modifier: Modifier,
-    list: List<Expense>,
-    title: String,
-) {
-    LazyColumn(modifier = modifier) {
-        item {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Text(text = title, fontSize = 20.sp)
-                Text(
-                    text = "See All",
-                    fontSize = 16.sp,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 55.dp)
-                )
-            }
-        }
-        items(list, key = { it.id!! }) {
-            TransactionListItem(
-                title = it.title,
-                amount = "৳${it.amount}",
-                icon = Utils.getIcon(it),
-                date = it.date,
-                color = if (it.type == "Income") Color.Green else Color.Red, it.id
-            )
+fun TransactionList(list: List<Expense>) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.Size.sm)
+    ) {
+        items(list) { expense ->
+            TransactionItem(expense = expense)
         }
     }
 }
 
 @Composable
-fun TransactionListItem(
-    title: String,
-    amount: String,
-    icon: Int,
-    date: String,
-    color: Color,
-    id: Int?
-) {
-    Box(
+fun TransactionItem(expense: Expense) {
+    Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, end = 55.dp, bottom = 8.dp)
-            .clickable { }
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row {
-            Image(
-                painter = painterResource(id = icon), contentDescription = null,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(shape = CircleShape)
-                    .border(2.dp, Zinc, CircleShape)
-                    .background(Color.Gray)
-                    .scale(.6f)
-            )
-            Spacer(modifier = Modifier.size(8.dp))
-            Column {
-                Text(text = title, fontSize = 16.sp)
-                Text(text = date, fontSize = 12.sp)
+                    .size(48.dp)
+                    .background(
+                        brush = getCategoryGradient(expense.category),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = getCategoryIcon(expense.category),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = expense.title,
+                    style = Typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Black
+                    )
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                val prefix = if (expense.type == "Expense") "-" else "+"
+                val color = if (expense.type == "Expense") Color.Red else DarkGreen
+
+                Text(
+                    text = "$prefix৳${expense.amount}.00",
+                    style = Typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = color
+                    )
+                )
+                Text(
+                    text = formatDateLabel(expense.date),
+                    style = Typography.bodySmall.copy(
+                        color = Gray,
+                        fontWeight = FontWeight.Normal
+                    )
+                )
             }
         }
-        Text(
-            text = amount,
-            fontSize = 20.sp,
-            modifier = Modifier.align(Alignment.CenterEnd),
-            color = color
-        )
+    }
+}
+
+private fun getCategoryGradient(category: String): Brush {
+    return when (category.lowercase()) {
+        "food" -> Brush.verticalGradient(colors = listOf(Color(0xFFFDC830), Color(0xFFF37335)))
+        "shopping" -> Brush.verticalGradient(colors = listOf(Color(0xFF8E2DE2), Color(0xFF4A00E0)))
+        "entertainment" -> Brush.verticalGradient(colors = listOf(Color(0xFFF85032), Color(0xFFE73827)))
+        "transport", "transportation" -> Brush.verticalGradient(colors = listOf(Color(0xFF00c6ff), Color(0xFF0072ff)))
+        "home", "home rent" -> Brush.verticalGradient(colors = listOf(Color(0xFF2B5748), Color(0xFF9CB080)))
+        "health", "medical" -> Brush.verticalGradient(colors = listOf(Color(0xFF2193b0), Color(0xFF6dd5ed)))
+        "salary", "income" -> Brush.verticalGradient(colors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)))
+        "deposit" -> Brush.verticalGradient(colors = listOf(Color(0xFF11990e), Color(0xFF38ef7d)))
+        else -> Brush.verticalGradient(colors = listOf(Color(0xFFBDBDBD), Color(0xFF757575)))
+    }
+}
+
+private fun getCategoryIcon(category: String): ImageVector {
+    return when (category.lowercase()) {
+        "home", "home rent" -> Icons.Default.Home
+        "food" -> Icons.Default.Restaurant
+        "transport", "transportation" -> Icons.Default.DirectionsBus
+        "shopping" -> Icons.Default.ShoppingBag
+        "salary" -> Icons.Default.Payments
+        "health" -> Icons.Default.MedicalServices
+        "education" -> Icons.Default.School
+        "entertainment" -> Icons.Default.ConfirmationNumber
+        "deposit" -> Icons.Default.AddCircle
+        else -> Icons.Default.Category
+    }
+}
+
+private fun formatDateLabel(dateStr: String): String {
+    return try {
+        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val date = sdf.parse(dateStr) ?: return dateStr
+        val calendar = Calendar.getInstance()
+        val today = calendar.time
+        calendar.add(Calendar.DAY_OF_YEAR, -1)
+        val yesterday = calendar.time
+
+        val fmt = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        when (fmt.format(date)) {
+            fmt.format(today) -> "Today"
+            fmt.format(yesterday) -> "Yesterday"
+            else -> dateStr
+        }
+    } catch (e: Exception) {
+        dateStr
     }
 }
