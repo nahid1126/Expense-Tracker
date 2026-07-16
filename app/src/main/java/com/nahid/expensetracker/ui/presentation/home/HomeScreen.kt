@@ -1,14 +1,17 @@
 package com.nahid.expensetracker.ui.presentation.home
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,8 +32,8 @@ import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Payments
@@ -51,21 +54,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nahid.expensetracker.core.AppSpacing
-import com.nahid.expensetracker.core.utils.Utils
-import com.nahid.expensetracker.data.local.entity.Expense
+import com.nahid.expensetracker.domain.model.Expense
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
@@ -74,12 +73,10 @@ import com.nahid.expensetracker.ui.theme.DarkGreen
 import com.nahid.expensetracker.ui.theme.Gray
 import com.nahid.expensetracker.ui.theme.RedFox
 import com.nahid.expensetracker.ui.theme.Typography
-import com.nahid.expensetracker.ui.theme.Zinc
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 private const val TAG = "HomeScreen"
@@ -168,7 +165,19 @@ fun HomeScreen(
                 )
             }
             Spacer(Modifier.height(AppSpacing.Size.md))
-            TransactionList(list = state.topExpenseList)
+            AnimatedVisibility(
+                visible = startAnimation,
+                enter = slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(600)
+                ) + fadeIn(),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(600)
+                ) + fadeOut()
+            ) {
+                TransactionList(list = state.topExpenseEntityList)
+            }
         }
 
         if (state.showExitDialog) {
@@ -363,7 +372,7 @@ private fun getCategoryGradient(category: String): Brush {
         "home", "home rent" -> Brush.verticalGradient(colors = listOf(Color(0xFF2B5748), Color(0xFF9CB080)))
         "health", "medical" -> Brush.verticalGradient(colors = listOf(Color(0xFF2193b0), Color(0xFF6dd5ed)))
         "salary", "income" -> Brush.verticalGradient(colors = listOf(Color(0xFF11998e), Color(0xFF38ef7d)))
-        "deposit" -> Brush.verticalGradient(colors = listOf(Color(0xFF11990e), Color(0xFF38ef7d)))
+        "deposit" -> Brush.verticalGradient(colors = listOf(Color(0xFF3F51B5), Color(0xFF009688)))
         else -> Brush.verticalGradient(colors = listOf(Color(0xFFBDBDBD), Color(0xFF757575)))
     }
 }

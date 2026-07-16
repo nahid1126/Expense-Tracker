@@ -3,7 +3,6 @@
 package com.nahid.expensetracker.ui.presentation.addexpense
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,67 +17,38 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CurrencyLira
 import androidx.compose.material.icons.filled.Title
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nahid.expensetracker.R
 import com.nahid.expensetracker.core.AppConstants
 import com.nahid.expensetracker.core.AppSpacing
-import com.nahid.expensetracker.core.utils.Utils
 import com.nahid.expensetracker.core.utils.extension.longToSimpleDateFormatString
-import com.nahid.expensetracker.data.local.entity.Expense
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.CustomDatePickerDialog
 import com.nahid.expensetracker.ui.presentation.component.QuestionSelection
 import com.nahid.expensetracker.ui.presentation.component.input_field.StandardInputField
-import com.nahid.expensetracker.ui.presentation.component.input_field.textFieldColors
 import com.nahid.expensetracker.ui.theme.PurpleGrey80
-import com.nahid.expensetracker.ui.theme.Zinc
 import org.koin.compose.viewmodel.koinViewModel
 
 private const val TAG = "AddExpanseScreen"
@@ -140,7 +110,7 @@ fun AddExpenseScreen(
                 onValueChange = {
                     viewModel.updateUiState(state.copy(expTitle = it))
                 },
-                label = "Expense Title", placeholder = "Gari vara",
+                label = "ExpenseEntity Title", placeholder = "Gari vara",
                 singleLine = true,
                 leadingIcon = Icons.Default.Title
             )
@@ -158,7 +128,7 @@ fun AddExpenseScreen(
                     )
                 },
                 getLabel = { it.name },
-                textLabel = "Expense Type",
+                textLabel = "ExpenseEntity Type",
             )
             Spacer(Modifier.height(AppSpacing.Size.sm))
             QuestionSelection(
@@ -174,7 +144,7 @@ fun AddExpenseScreen(
                     )
                 },
                 getLabel = { it.name },
-                textLabel = "Expense Category",
+                textLabel = "ExpenseEntity Category",
             )
             Spacer(Modifier.height(AppSpacing.Size.md))
             //var amount by remember { mutableStateOf(if (state.amount == 0.0) "" else state.amount.toString()) }
@@ -209,7 +179,7 @@ fun AddExpenseScreen(
                     if (state.selectedExpDate != 0L) {
                         state.selectedExpDate.longToSimpleDateFormatString()
                     } else {
-                        "Expense Date"
+                        "ExpenseEntity Date"
 
                     },
                     style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.primary),
@@ -219,7 +189,7 @@ fun AddExpenseScreen(
                 Icon(
                     imageVector = Icons.Default.CalendarMonth,
                     tint = MaterialTheme.colorScheme.primary,
-                    contentDescription = "Expense Date",
+                    contentDescription = "ExpenseEntity Date",
                     modifier = Modifier.padding(end = AppConstants.APP_MARGIN.dp)
                 )
             }

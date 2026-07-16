@@ -5,7 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nahid.expensetracker.core.Results
 import com.nahid.expensetracker.core.utils.extension.longToSimpleDateFormatString
-import com.nahid.expensetracker.data.local.entity.Expense
+import com.nahid.expensetracker.data.local.entity.ExpenseEntity
+import com.nahid.expensetracker.domain.model.Expense
 import com.nahid.expensetracker.domain.model.ExpenseCategory
 import com.nahid.expensetracker.domain.model.ExpenseType
 import com.nahid.expensetracker.domain.repository.ExpenseRepository
@@ -96,19 +97,19 @@ class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : Vi
         val mainState = uiState.value
         viewModelScope.launch {
             if (mainState.expTitle.isNullOrEmpty()) {
-                showMessage(false, "Expense Title Required")
+                showMessage(false, "ExpenseEntity Title Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.selectedExpType.isNullOrEmpty()) {
-                showMessage(false, "Expense Type Required")
+                showMessage(false, "ExpenseEntity Type Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.selectedExpCategory.isNullOrEmpty()) {
-                showMessage(false, "Expense Category Required")
+                showMessage(false, "ExpenseEntity Category Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.amount == 0) {
-                showMessage(false, "Expense Amount Required")
+                showMessage(false, "ExpenseEntity Amount Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.selectedExpDate == 0L) {
-                showMessage(false, "Expense Date Required")
+                showMessage(false, "ExpenseEntity Date Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else {
                 val expense = Expense(
@@ -122,7 +123,7 @@ class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : Vi
 
                 when (val result = expenseRepository.insertExpense(expense)) {
                     is Results.Success -> {
-                        showMessage(true, "Expense added successfully")
+                        showMessage(true, "ExpenseEntity added successfully")
                         //expenseRepository.scheduleSync()
                         updateUiState(uiState.value.copy(isLoading = false))
                         mutableUiEvent.emit(AddExpenseUiEvent.NavigateBack)
@@ -138,8 +139,8 @@ class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : Vi
     }
 
 
-    /*  var finalExpense = MutableStateFlow<Expense?>(null)
-      fun addExpanse(expense: Expense, isForUpdate: Boolean) {
+    /*  var finalExpense = MutableStateFlow<ExpenseEntity?>(null)
+      fun addExpanse(expense: ExpenseEntity, isForUpdate: Boolean) {
           viewModelScope.launch {
               if (expense.title.isEmpty()) {
                   message.emit("Please enter title")
@@ -152,7 +153,7 @@ class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : Vi
               } else if (expense.date.isEmpty()) {
                   message.emit("Please select date")
               } else {
-                  message.emit("Expense ${if (isForUpdate) "updated" else "added"} successfully")
+                  message.emit("ExpenseEntity ${if (isForUpdate) "updated" else "added"} successfully")
                   if (isForUpdate) {
                       repository.updateExpense(expense)
                   } else {
@@ -196,7 +197,7 @@ data class AddExpenseUiState(
     val expCategories: List<ExpenseCategory> = arrayListOf(),
     val expTypes: List<ExpenseType> = arrayListOf(),
     val uiConfig: MainUIConfig = MainUIConfig(
-        title = "Add Expense",
+        title = "Add ExpenseEntity",
         showTopBar = true,
         showNavigation = true,
         showSubTitle = false

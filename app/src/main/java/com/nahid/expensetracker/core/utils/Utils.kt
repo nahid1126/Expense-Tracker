@@ -1,7 +1,7 @@
 package com.nahid.expensetracker.core.utils
 
 import com.nahid.expensetracker.R
-import com.nahid.expensetracker.data.local.entity.Expense
+import com.nahid.expensetracker.data.local.entity.ExpenseEntity
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -28,8 +28,8 @@ object Utils {
         }
         return date.time
     }
-    fun getIcon(expense: Expense): Int {
-        return when (expense.category) {
+    fun getIcon(expenseEntity: ExpenseEntity): Int {
+        return when (expenseEntity.category) {
             "Salary" -> {
                 R.drawable.ic_up
             }

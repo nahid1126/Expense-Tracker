@@ -1,9 +1,9 @@
 package com.nahid.expensetracker.ui.presentation.home
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nahid.expensetracker.data.local.entity.Expense
+import com.nahid.expensetracker.data.local.entity.ExpenseEntity
+import com.nahid.expensetracker.domain.model.Expense
 import com.nahid.expensetracker.domain.model.User
 import com.nahid.expensetracker.domain.repository.ExpenseRepository
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
@@ -30,13 +30,13 @@ class HomeViewModel(private val expenseRepository: ExpenseRepository) : ViewMode
         expenseRepository.getAllExpense()
     ) { state, lastFive, allExpenses ->
         val totalIncome = allExpenses.filter { it.type == "Income" }.sumOf { it.amount }
-        val totalExpense = allExpenses.filter { it.type == "Expense" }.sumOf { it.amount }
-        val totalBalance = totalIncome - totalExpense
+        val totalExpenseEntity = allExpenses.filter { it.type == "Expense" }.sumOf { it.amount }
+        val totalBalance = totalIncome - totalExpenseEntity
         
         state.copy(
-            topExpenseList = lastFive,
+            topExpenseEntityList = lastFive,
             totalIncome = totalIncome.toDouble(),
-            totalExpense = totalExpense.toDouble(),
+            totalExpense = totalExpenseEntity.toDouble(),
             totalBalance = totalBalance.toDouble()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), HomeUiState())
@@ -70,7 +70,7 @@ data class HomeUiState(
     val totalIncome: Double = 0.0,
     val totalExpense: Double = 0.0,
     val totalBalance: Double = 0.0,
-    val topExpenseList: List<Expense> = arrayListOf(),
+    val topExpenseEntityList: List<Expense> = arrayListOf(),
     val uiConfig: MainUIConfig = MainUIConfig(
         title = "Home",
         dateTitle = "",

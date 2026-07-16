@@ -138,7 +138,7 @@ fun SplashScreen(
                 Spacer(modifier = Modifier.height(AppSpacing.Size.lg))
 
                 Text(
-                    text = "Expense Tracker",
+                    text = "ExpenseEntity Tracker",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary

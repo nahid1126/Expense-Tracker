@@ -2,11 +2,12 @@ package com.nahid.expensetracker.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.nahid.expensetracker.domain.model.Expense
 import kotlinx.serialization.Serializable
 
 @Serializable
 @Entity
-data class Expense(
+data class ExpenseEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int?,
     val title: String,
@@ -17,7 +18,7 @@ data class Expense(
     val isSynced: Boolean = false,
 )
 
-fun Expense.toDomain() = Expense(
+fun ExpenseEntity.toDomain() = Expense(
     id = id,
     title = title,
     amount = amount,
@@ -27,7 +28,7 @@ fun Expense.toDomain() = Expense(
     isSynced = isSynced
 )
 
-fun Expense.toEntity() = Expense(
+fun Expense.toEntity() = ExpenseEntity(
     id = id,
     title = title,
     amount = amount,
