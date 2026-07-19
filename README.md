@@ -37,18 +37,16 @@ A **modern, offline-first personal finance manager** built to showcase professio
 ## 📸 Screenshots
 
 <p align="center">
-  <img width="200" alt="Login Screen" src="https://via.placeholder.com/200x400?text=Login+Screen" />
+  <img width="200" height="400" alt="Login Screen" src="https://github.com/user-attachments/assets/1dd45cf1-b134-46ba-86be-08dc8aef9493" />
   &nbsp;&nbsp;&nbsp;
-  <img width="200" alt="Home Dashboard" src="https://via.placeholder.com/200x400?text=Home+Dashboard" />
+  <img width="200" height="400" alt="Home Dashboard" src="https://github.com/user-attachments/assets/f609c4cd-c308-48cc-a218-4398d762944c" />
   &nbsp;&nbsp;&nbsp;
-  <img width="200" alt="Add Expense" src="https://via.placeholder.com/200x400?text=Add+Expense" />
+  <img width="200" height="400" alt="Add Expense" src="https://github.com/user-attachments/assets/b6e777fc-bfd6-448a-8930-acb362f80164" />
   &nbsp;&nbsp;&nbsp;
-  <img width="200" alt="Transaction History" src="https://via.placeholder.com/200x400?text=Transactions" />
+  <img width="200" height="400" alt="Transaction History Income" src="https://github.com/user-attachments/assets/dce5bcd3-ac76-445c-ba4a-87eeb84e5a44" />
+  &nbsp;&nbsp;&nbsp;
+  <img width="200" height="400" alt="Transaction History Expense" src="https://github.com/user-attachments/assets/bd39bcad-9b0d-4d84-8853-ccbd24b220bc" />
 </p>
-
-> *Note: Replace the placeholders above with actual screenshots from the `app/screenshots` folder for a better portfolio impact.*
-
----
 
 ## 🔥 Learning Outcomes
 
@@ -57,8 +55,6 @@ A **modern, offline-first personal finance manager** built to showcase professio
 - Integrated **Google Authentication** using the latest Credential Manager API for a modern login flow.
 - Deepened expertise in **Jetpack Compose** custom layouts and complex state management.
 - Applied **Clean Architecture** principles to maintain a scalable and testable codebase.
-
----
 
 ## 📸 Author  
 
