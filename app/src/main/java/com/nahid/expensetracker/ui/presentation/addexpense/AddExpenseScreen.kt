@@ -110,7 +110,7 @@ fun AddExpenseScreen(
                 onValueChange = {
                     viewModel.updateUiState(state.copy(expTitle = it))
                 },
-                label = "ExpenseEntity Title", placeholder = "Gari vara",
+                label = "Expense Title", placeholder = "Gari vara",
                 singleLine = true,
                 leadingIcon = Icons.Default.Title
             )
@@ -128,7 +128,7 @@ fun AddExpenseScreen(
                     )
                 },
                 getLabel = { it.name },
-                textLabel = "ExpenseEntity Type",
+                textLabel = "Expense Type",
             )
             Spacer(Modifier.height(AppSpacing.Size.sm))
             QuestionSelection(
@@ -144,7 +144,7 @@ fun AddExpenseScreen(
                     )
                 },
                 getLabel = { it.name },
-                textLabel = "ExpenseEntity Category",
+                textLabel = "Expense Category",
             )
             Spacer(Modifier.height(AppSpacing.Size.md))
             //var amount by remember { mutableStateOf(if (state.amount == 0.0) "" else state.amount.toString()) }
@@ -179,7 +179,7 @@ fun AddExpenseScreen(
                     if (state.selectedExpDate != 0L) {
                         state.selectedExpDate.longToSimpleDateFormatString()
                     } else {
-                        "ExpenseEntity Date"
+                        "Expense Date"
 
                     },
                     style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.primary),
@@ -189,7 +189,7 @@ fun AddExpenseScreen(
                 Icon(
                     imageVector = Icons.Default.CalendarMonth,
                     tint = MaterialTheme.colorScheme.primary,
-                    contentDescription = "ExpenseEntity Date",
+                    contentDescription = "Expense Date",
                     modifier = Modifier.padding(end = AppConstants.APP_MARGIN.dp)
                 )
             }

@@ -91,19 +91,19 @@ class AddExpenseViewModel(
         val mainState = uiState.value
         viewModelScope.launch {
             if (mainState.expTitle.isNullOrEmpty()) {
-                showMessage(false, "ExpenseEntity Title Required")
+                showMessage(false, "Expense Title Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.selectedExpType.isNullOrEmpty()) {
-                showMessage(false, "ExpenseEntity Type Required")
+                showMessage(false, "Expense Type Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.selectedExpCategory.isNullOrEmpty()) {
-                showMessage(false, "ExpenseEntity Category Required")
+                showMessage(false, "Expense Category Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.amount == 0) {
-                showMessage(false, "ExpenseEntity Amount Required")
+                showMessage(false, "Expense Amount Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.selectedExpDate == 0L) {
-                showMessage(false, "ExpenseEntity Date Required")
+                showMessage(false, "Expense Date Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else {
                 val expense = Expense(
@@ -153,7 +153,7 @@ data class AddExpenseUiState(
     val expCategories: List<ExpenseCategory> = arrayListOf(),
     val expTypes: List<ExpenseType> = arrayListOf(),
     val uiConfig: MainUIConfig = MainUIConfig(
-        title = "Add ExpenseEntity",
+        title = "Add Expense",
         showTopBar = true,
         showNavigation = true,
         showSubTitle = false

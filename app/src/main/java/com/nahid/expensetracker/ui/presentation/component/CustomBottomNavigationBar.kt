@@ -43,7 +43,7 @@ fun CustomBottomNavigationBar(
 
     val leftItem = BottomNavItem(Destinations.Home, Icons.Default.Home, "Home")
 
-    val rightItem = BottomNavItem(Destinations.Transections, Icons.Default.BarChart, "Transections")
+    val rightItem = BottomNavItem(Destinations.Transections, Icons.Default.BarChart, "Transactions")
 
 
     Box(

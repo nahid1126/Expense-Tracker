@@ -20,7 +20,7 @@ interface ExpenseDao {
     @Query("SELECT * FROM ExpenseEntity WHERE id = :id")
     fun getExpenseByID(id: Int): Flow<ExpenseEntity>
 
-    @Query("SELECT * FROM ExpenseEntity where type ='ExpenseEntity' ORDER BY amount DESC LIMIT 5 ")
+    @Query("SELECT * FROM ExpenseEntity where type ='Expense' ORDER BY amount DESC LIMIT 5 ")
     fun getAllTopExpense(): Flow<List<ExpenseEntity>>
 
     @Query("SELECT * FROM ExpenseEntity where type =:type")
@@ -37,7 +37,7 @@ interface ExpenseDao {
     suspend fun deleteExpense()
 
     @Query("SELECT type, date, SUM(amount) AS total_amount FROM ExpenseEntity where type = :type GROUP BY type, date ORDER BY date")
-    fun getAllExpenseByDate(type: String = "ExpenseEntity"): Flow<List<ExpenseSummary>>
+    fun getAllExpenseByDate(type: String = "Expense"): Flow<List<ExpenseSummary>>
 
     @Query("SELECT * FROM ExpenseEntity WHERE isSynced = 0")
     suspend fun getUnsyncedExpenses(): List<ExpenseEntity>

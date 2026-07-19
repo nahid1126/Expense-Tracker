@@ -111,7 +111,7 @@ fun LoginScreen(
                 }
                 Spacer(Modifier.height(AppSpacing.Size.sm))
                 Text(
-                    "ExpenseEntity Tracker",
+                    "Expense Tracker",
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = MaterialTheme.colorScheme.primary,
