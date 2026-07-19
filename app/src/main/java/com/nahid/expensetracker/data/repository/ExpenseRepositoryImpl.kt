@@ -13,10 +13,10 @@ import com.nahid.expensetracker.core.utils.NetworkHelper
 import com.nahid.expensetracker.core.utils.exception.AppException
 import com.nahid.expensetracker.core.utils.extension.getSpecificException
 import com.nahid.expensetracker.data.local.dao.ExpenseDao
-import com.nahid.expensetracker.data.local.entity.ExpenseEntity
 import com.nahid.expensetracker.data.local.entity.toDomain
 import com.nahid.expensetracker.data.local.entity.toEntity
 import com.nahid.expensetracker.data.model.ExpenseCategoryDto
+import com.nahid.expensetracker.data.model.ExpenseDto
 import com.nahid.expensetracker.data.model.ExpenseTypeDto
 import com.nahid.expensetracker.data.model.toDto
 import com.nahid.expensetracker.data.worker.SyncWorker
@@ -25,6 +25,7 @@ import com.nahid.expensetracker.domain.model.ExpenseCategory
 import com.nahid.expensetracker.domain.model.ExpenseType
 import com.nahid.expensetracker.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
@@ -75,33 +76,73 @@ class ExpenseRepositoryImpl(
 
     override suspend fun insertExpense(expense: Expense): Results<Boolean> {
         return try {
+            // Offline First: Always insert into Room first
             expenseDao.insertExpense(expense.toEntity())
+            // Schedule background sync
+            scheduleSync()
             Results.Success(true)
         } catch (e: Exception) {
             Results.Error(e.getSpecificException())
         }
     }
 
-    override suspend fun syncUnsyncedExpenses(): Results<Unit> {
-        val currentUser = auth.currentUser
-            ?: return Results.Error(AppException.AuthException("User not authenticated"))
-        if (!networkHelper.isNetworkConnected()) return Results.Error(AppException.NetworkException())
-
+    override suspend fun insertExpenseToFirebase(expense: Expense): Results<Boolean> {
         return try {
-            val unsyncedExpenses = expenseDao.getUnsyncedExpenses()
-            unsyncedExpenses.forEach { expense ->
-                val expenseDto = expense.toDomain()
-                db.collection("users")
-                    .document(currentUser.uid)
-                    .collection("expenses")
-                    .add(expenseDto)
-                    .await()
+            val uid = auth.currentUser?.uid
+                ?: return Results.Error(AppException.AuthException("User not logged in"))
+            
+            val expenseDto = expense.toDto()
+            val docRef = if (expense.id != null) {
+                db.collection("users").document(uid).collection("expenses").document(expense.id.toString())
+            } else {
+                db.collection("users").document(uid).collection("expenses").document()
+            }
+            
+            docRef.set(expenseDto).await()
+            Results.Success(true)
+        } catch (e: Exception) {
+            Log.e(TAG, "insertExpenseToFirebase: ${e.message}")
+            Results.Error(e.getSpecificException())
+        }
+    }
 
-                expenseDao.updateExpense(expense.copy(isSynced = true))
+    override suspend fun fetchAndStoreExpenses(): Results<Unit> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Results.Error(AppException.AuthException("User not logged in"))
+            
+            val snap = db.collection("users")
+                .document(uid)
+                .collection("expenses")
+                .get()
+                .await()
+
+            val expenses = snap.documents.mapNotNull { doc ->
+                doc.toObject(ExpenseDto::class.java)?.toDomain()
+            }
+
+            expenses.forEach { expense ->
+                expenseDao.insertExpense(expense.toEntity())
+            }
+            
+            Results.Success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "fetchAndStoreExpenses: ${e.message}")
+            Results.Error(e.getSpecificException())
+        }
+    }
+
+    override suspend fun syncUnsyncedExpenses(): Results<Unit> {
+        return try {
+            val unsyncedExpenses = expenseDao.getAllExpense().first().filter { !it.isSynced }
+            unsyncedExpenses.forEach { entity ->
+                val result = insertExpenseToFirebase(entity.toDomain())
+                if (result is Results.Success) {
+                    expenseDao.insertExpense(entity.copy(isSynced = true))
+                }
             }
             Results.Success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "syncUnsyncedExpenses error: ${e.message}")
             Results.Error(e.getSpecificException())
         }
     }
@@ -116,17 +157,13 @@ class ExpenseRepositoryImpl(
             .build()
 
         workManager.enqueueUniqueWork(
-            "ExpenseSyncWork",
+            "ExpenseSync",
             ExistingWorkPolicy.REPLACE,
             syncRequest
         )
     }
 
-    override fun getTopExpense(): Flow<List<Expense>> {
-        return expenseDao.getAllTopExpense().map { list->
-            list.map { it.toDomain() }
-        }
-    }
+
     override fun getLastFiveExpense(): Flow<List<Expense>> {
         return expenseDao.getLastFiveExpense().map { list->
             list.map { it.toDomain() }

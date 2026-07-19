@@ -8,6 +8,15 @@ plugins {
 
 android {
     namespace = "com.nahid.expensetracker"
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore.jks")
+            storePassword = "n@hid26"
+            keyAlias = "key0"
+            keyPassword = "n@hid26"
+        }
+    }
     compileSdk = 36
 
     defaultConfig {
@@ -23,18 +32,24 @@ android {
         }
     }
 
+    androidResources {
+        localeFilters += "en"
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -45,9 +60,6 @@ android {
         buildConfig = true
         dataBinding = true
     }
-    configurations.implementation{
-        exclude(group = "com.intellij", module = "annotations")
-    }
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -57,6 +69,21 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val variantName = if (variant.name == "debug") "d" else "r"
+            val appName = "Expense Tracker"
+            val versionCode = android.defaultConfig.versionCode ?: 1
+            output.outputFileName.set("$appName-v$versionCode-$variantName.apk")
+        }
+    }
+}
+
+configurations.all {
+    exclude(group = "com.intellij", module = "annotations")
 }
 
 dependencies {

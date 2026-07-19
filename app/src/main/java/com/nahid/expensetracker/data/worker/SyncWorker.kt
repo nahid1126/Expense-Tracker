@@ -13,12 +13,18 @@ class SyncWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams), KoinComponent {
 
-    private val expenseRepository: ExpenseRepository by inject()
+    private val repository: ExpenseRepository by inject()
 
     override suspend fun doWork(): Result {
-        return when (expenseRepository.syncUnsyncedExpenses()) {
+        return when (repository.syncUnsyncedExpenses()) {
             is Results.Success -> Result.success()
-            is Results.Error -> Result.retry()
+            is Results.Error -> {
+                if (runAttemptCount < 3) {
+                    Result.retry()
+                } else {
+                    Result.failure()
+                }
+            }
         }
     }
 }

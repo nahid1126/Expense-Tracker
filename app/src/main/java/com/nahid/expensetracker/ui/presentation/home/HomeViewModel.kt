@@ -42,6 +42,12 @@ class HomeViewModel(private val expenseRepository: ExpenseRepository) : ViewMode
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), HomeUiState())
     val uiEvent: SharedFlow<HomeUiEvent> = mutableUiEvent.asSharedFlow()
 
+    init {
+        viewModelScope.launch {
+            expenseRepository.fetchAndStoreExpenses()
+        }
+    }
+
     fun updateUiState(uiState: HomeUiState) {
         mutableUiState.value = uiState
     }

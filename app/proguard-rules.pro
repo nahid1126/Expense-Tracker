@@ -8,12 +8,12 @@
 -keep class kotlin.coroutines.Continuation
 
 ############################################
-# 🔷 GSON
+# 🔷 GSON / FIRESTORE
 ############################################
 
 # Keep only your DTOs / entities (narrow scope = better)
--keep class com.suffixit.fieldforce.data.remote.** { <fields>; }
--keep class com.suffixit.fieldforce.data.local.entity.** { <fields>; }
+-keep class com.nahid.expensetracker.data.model.** { <fields>; }
+-keep class com.nahid.expensetracker.data.local.entity.** { <fields>; }
 
 # Optional (only if using @Expose heavily)
 -keepattributes *Annotation*
@@ -29,6 +29,20 @@
 
 -keep class kotlinx.serialization.** { *; }
 
+############################################
+# 🔷 KTOR CLIENT (OPTIMIZED)
+############################################
+
+# Keep only required reflection-heavy parts (NOT whole library)
+-keep class io.ktor.client.engine.** { *; }
+-keep class io.ktor.util.** { *; }
+
+-keep class io.ktor.client.plugins.logging.** { *; }
+
+# Avoid crashes in engines / interceptors
+-keep class io.ktor.client.* { *; }
+
+-dontwarn io.ktor.**
 -dontwarn io.netty.**
 -dontwarn org.slf4j.**
 -dontwarn com.typesafe.**
@@ -51,10 +65,17 @@
 -keep class javax.annotation.** { *; }
 
 ############################################
+# 🔷 OKHTTP (IMPORTANT for KTOR engine)
+############################################
+
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+############################################
 # 🔷 SAFE DEFAULT CONSTRUCTORS (LIMITED)
 ############################################
 
-# ⚠️ ONLY for serialization frameworks (NOT global)
--keepclassmembers class com.suffixit.leafglt.data.** {
+# ⚠️ REQUIRED for Firestore / Serialization to instantiate objects
+-keepclassmembers class com.nahid.expensetracker.data.** {
     public <init>();
 }

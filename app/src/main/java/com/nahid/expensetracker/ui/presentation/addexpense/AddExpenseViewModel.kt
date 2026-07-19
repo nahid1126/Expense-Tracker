@@ -1,11 +1,9 @@
 package com.nahid.expensetracker.ui.presentation.addexpense
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nahid.expensetracker.core.Results
 import com.nahid.expensetracker.core.utils.extension.longToSimpleDateFormatString
-import com.nahid.expensetracker.data.local.entity.ExpenseEntity
 import com.nahid.expensetracker.domain.model.Expense
 import com.nahid.expensetracker.domain.model.ExpenseCategory
 import com.nahid.expensetracker.domain.model.ExpenseType
@@ -23,7 +21,9 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "AddExpenseViewModel"
 
-class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : ViewModel() {
+class AddExpenseViewModel(
+    private val expenseRepository: ExpenseRepository
+) : ViewModel() {
     private val mutableUiState = MutableStateFlow(AddExpenseUiState())
     private val mutableUiEvent = MutableSharedFlow<AddExpenseUiEvent>()
 
@@ -40,12 +40,6 @@ class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : Vi
         }
     }
 
-    init {
-        viewModelScope.launch {
-            val cat = expenseRepository.getExpCategory()
-            Log.d(TAG, "expCat: $cat")
-        }
-    }
 
     fun getInitialData() {
         viewModelScope.launch {
@@ -121,10 +115,11 @@ class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : Vi
                     category = mainState.selectedExpCategory
                 )
 
+                // 1. Always insert into local database (Single Source of Truth)
+                // 2. The repository will handle background synchronization via WorkManager
                 when (val result = expenseRepository.insertExpense(expense)) {
                     is Results.Success -> {
-                        showMessage(true, "ExpenseEntity added successfully")
-                        //expenseRepository.scheduleSync()
+                        showMessage(true, "Expense added successfully")
                         updateUiState(uiState.value.copy(isLoading = false))
                         mutableUiEvent.emit(AddExpenseUiEvent.NavigateBack)
                     }
@@ -137,45 +132,6 @@ class AddExpenseViewModel(private val expenseRepository: ExpenseRepository) : Vi
             }
         }
     }
-
-
-    /*  var finalExpense = MutableStateFlow<ExpenseEntity?>(null)
-      fun addExpanse(expense: ExpenseEntity, isForUpdate: Boolean) {
-          viewModelScope.launch {
-              if (expense.title.isEmpty()) {
-                  message.emit("Please enter title")
-              } else if (expense.type.isEmpty()) {
-                  message.emit("Please select type")
-              } else if (expense.amount.toString().trim().isEmpty()) {
-                  message.emit("Please enter amount")
-              } else if (expense.category.isEmpty()) {
-                  message.emit("Please select category")
-              } else if (expense.date.isEmpty()) {
-                  message.emit("Please select date")
-              } else {
-                  message.emit("ExpenseEntity ${if (isForUpdate) "updated" else "added"} successfully")
-                  if (isForUpdate) {
-                      repository.updateExpense(expense)
-                  } else {
-                      repository.insertExpanse(expense)
-                  }
-              }
-          }
-      }*/
-
-    /*fun getExpenseByID(id: Int) {
-        val expense = repository.getExpenseByID(id).stateIn(
-            viewModelScope, SharingStarted.WhileSubscribed(), null
-        )
-        viewModelScope.launch {
-            expense.collect {
-                it?.let {
-                    finalExpense.value = it
-                    Log.d(TAG, "getExpenseByID: ${finalExpense.value}")
-                }
-            }
-        }
-    }*/
 }
 
 sealed interface AddExpenseUiEvent {

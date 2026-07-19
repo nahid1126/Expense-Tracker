@@ -356,7 +356,7 @@ fun FinalExpenseGraphCard(expenses: List<Expense>) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(220.dp),
+                            .height(200.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -402,7 +402,7 @@ fun FinalExpenseGraphCard(expenses: List<Expense>) {
                         showPercentBarTop = false,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(280.dp)
+                            .height(200.dp)
                     )
                 }
             }
