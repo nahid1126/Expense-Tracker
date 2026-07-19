@@ -48,10 +48,8 @@ class HomeViewModel(private val expenseRepository: ExpenseRepository) : ViewMode
         viewModelScope.launch {
             mutableUiState.update { it.copy(isLoading = true) }
             val fetchExpense = async { expenseRepository.fetchAndStoreExpenses() }
-            val expenseResponse = fetchExpense.await()
-
-            when {
-                expenseResponse is Results.Success -> {
+            when (val expenseResponse = fetchExpense.await()) {
+                is Results.Success -> {
                     mutableUiState.update {
                         it.copy(
                             isLoading = false
@@ -59,7 +57,7 @@ class HomeViewModel(private val expenseRepository: ExpenseRepository) : ViewMode
                     }
                 }
 
-                expenseResponse is Results.Error -> {
+                is Results.Error -> {
                     mutableUiState.update {
                         it.copy(
                             isLoading = false
