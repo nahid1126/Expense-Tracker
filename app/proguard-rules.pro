@@ -1,5 +1,5 @@
 ############################################
-# 🔷 BASIC
+# 🔷 BASIC & DEBUGGING
 ############################################
 
 -keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod, SourceFile, LineNumberTable
@@ -9,34 +9,43 @@
 -keep class kotlin.coroutines.Continuation
 
 ############################################
-# 🔷 DOMAIN & DATA MODELS (CRITICAL)
+# 🔷 DOMAIN & DATA MODELS (SURGICAL)
 ############################################
 
-# Keep all domain and data models as they are used in Serialization and Firebase
--keep class com.nahid.expensetracker.domain.model.** { *; }
--keep class com.nahid.expensetracker.data.model.** { *; }
--keep class com.nahid.expensetracker.data.local.entity.** { *; }
--keep class com.nahid.expensetracker.domain.uiconfig.** { *; }
+# Preserving fields and constructors for Firestore and Serialization
+-keep class com.nahid.expensetracker.domain.model.** {
+    <fields>;
+    <init>(...);
+}
+-keep class com.nahid.expensetracker.data.model.** {
+    <fields>;
+    <init>(...);
+}
+-keep class com.nahid.expensetracker.data.local.entity.** {
+    <fields>;
+    <init>(...);
+}
+-keep class com.nahid.expensetracker.domain.uiconfig.** {
+    <fields>;
+    <init>(...);
+}
 
-# Keep all classes annotated with @Serializable
+# Keep classes used for Type-Safe Navigation
 -keep @kotlinx.serialization.Serializable class * { *; }
 -keepclassmembers class * {
     @kotlinx.serialization.SerialName <fields>;
 }
 
 ############################################
-# 🔷 FIREBASE & GMS
+# 🔷 KOIN (VIEWMODELS)
 ############################################
 
--keep class com.google.firebase.** { *; }
--dontwarn com.google.firebase.**
-
--keep class com.google.android.gms.** { *; }
--dontwarn com.google.android.gms.**
-
-# Credential Manager
--keep class androidx.credentials.** { *; }
--keep class com.google.android.libraries.identity.googleid.** { *; }
+# Preserve ViewModel constructors so Koin can instantiate them
+-keepclassmembers class * extends androidx.lifecycle.ViewModel {
+    public <init>(...);
+}
+-keep class org.koin.** { *; }
+-dontwarn org.koin.**
 
 ############################################
 # 🔷 ROOM
@@ -46,47 +55,38 @@
 -keep class * extends androidx.room.RoomDatabase
 -keep class * extends androidx.room.Entity
 -keep interface * extends androidx.room.Dao
+-dontwarn androidx.room.**
 
 ############################################
-# 🔷 KOIN (CRITICAL FOR VIEWMODELS)
+# 🔷 FIREBASE & GMS (MINIMAL)
 ############################################
 
--keep class org.koin.** { *; }
--dontwarn org.koin.**
+# Firebase often needs its internal classes kept if reflection is used
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
 
-# Keep ViewModels and their constructors for Koin injection
--keep class * extends androidx.lifecycle.ViewModel {
-    <init>(...);
-}
+# Credential Manager
+-keep class androidx.credentials.** { *; }
+-keep class com.google.android.libraries.identity.googleid.** { *; }
 
 ############################################
 # 🔷 WORK MANAGER
 ############################################
 
--keep class androidx.work.** { *; }
--keep class * extends androidx.work.ListenableWorker {
-    <init>(...);
+# Keep Worker constructors for system instantiation
+-keepclassmembers class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
 
 ############################################
-# 🔷 COMPOSE
+# 🔷 COMPOSE & OTHER LIBRARIES
 ############################################
 
--keep class androidx.compose.** { *; }
+# We DO NOT keep all of Compose, Ktor, or Lottie.
+# R8 should shrink these. Only add specific rules if they crash.
 -dontwarn androidx.compose.**
-
-############################################
-# 🔷 LOTTIE
-############################################
-
--keep class com.airbnb.lottie.** { *; }
-
-############################################
-# 🔷 MISC
-############################################
-
--keep class io.ktor.** { *; }
 -dontwarn io.ktor.**
-
--keep class kotlinx.serialization.** { *; }
--dontwarn kotlinx.serialization.**
+-dontwarn com.airbnb.lottie.**
+-dontwarn kotlinx.coroutines.**
+-dontwarn org.jetbrains.annotations.**

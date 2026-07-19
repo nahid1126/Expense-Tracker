@@ -100,6 +100,7 @@ fun HomeScreen(
         onChangeConfiguration(
             state.uiConfig
         )
+        viewModel.getInitialData()
         delay(200)
         startAnimation = true
     }
