@@ -30,7 +30,8 @@ data class BarChartData(val label: String, val value: Float)
 fun BarChart(
     data: List<BarChartData>,
     colors: List<Color>,
-    maxLimit: Float = 50000f,
+    isIncome: Boolean = false,
+    maxLimit: Float = 20000f,
     currencySymbol: String = "৳",
     showLabel: Boolean = true,
     showPercentBarTop: Boolean = false,
@@ -45,6 +46,17 @@ fun BarChart(
     val barBottomPaddingPx = with(density) { 24.dp.toPx() }
     val yAxisWidthPx = with(density) { 45.dp.toPx() }
     val labelColor = MaterialTheme.colorScheme.primary.toArgb()
+
+    val effectiveMaxLimit = if (isIncome) {
+        val maxValue = data.maxOfOrNull { it.value } ?: 10000f
+        when {
+            maxValue <= 10000f -> 10000f
+            maxValue <= 20000f -> 20000f
+            else -> 50000f
+        }
+    } else {
+        maxLimit
+    }
 
     var animationPlayed by remember { mutableStateOf(false) }
     val animationProgress = animateFloatAsState(
@@ -77,11 +89,11 @@ fun BarChart(
                 // ---------- Y AXIS & GRID ----------
                 if (showYAxis) {
                     val  stepCount = 5
-                    val valueStep = maxLimit / stepCount
+                    val valueStep = effectiveMaxLimit / stepCount
                     val yValues = (0..stepCount).map { it * valueStep }
                     
                     yValues.forEach { valItem ->
-                        val y = chartHeight - (valItem * (chartHeight / maxLimit))
+                        val y = chartHeight - (valItem * (chartHeight / effectiveMaxLimit))
                         
                         // Grid Line
                         drawLine(
@@ -115,8 +127,8 @@ fun BarChart(
 
                 // ---------- BARS ----------
                 data.forEachIndexed { index, item ->
-                    val scaleFactor = chartHeight / maxLimit
-                    val barHeight = (item.value.coerceAtMost(maxLimit) * scaleFactor) * animationProgress.value
+                    val scaleFactor = chartHeight / effectiveMaxLimit
+                    val barHeight = (item.value.coerceAtMost(effectiveMaxLimit) * scaleFactor) * animationProgress.value
 
                     val left = effectiveYAxisSpacingPx + barSpacing + index * (barWidth + barSpacing)
                     val top = chartHeight - barHeight

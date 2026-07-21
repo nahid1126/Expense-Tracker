@@ -11,6 +11,18 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 
+import java.util.Locale
+
+fun String.toDateMillis(): Long {
+    return try {
+        val sdf = SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault())
+        sdf.parse(this)?.time ?: 0L
+    } catch (e: Exception) {
+        0L
+    }
+}
+
+
 @OptIn(ExperimentalTime::class)
 private fun Long.toLocalDate() =
     Instant.fromEpochMilliseconds(this)

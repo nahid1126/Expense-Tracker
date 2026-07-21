@@ -12,6 +12,8 @@ interface ExpenseRepository {
     suspend fun getExpenseType(): Results<List<ExpenseType>>
 
     suspend fun insertExpense(expense: Expense): Results<Boolean>
+    suspend fun updateExpense(expense: Expense): Results<Boolean>
+    suspend fun deleteExpense(expense: Expense): Results<Boolean>
     suspend fun insertExpenseToFirebase(expense: Expense): Results<Boolean>
     suspend fun syncUnsyncedExpenses(): Results<Unit>
     suspend fun fetchAndStoreExpenses(): Results<Unit>

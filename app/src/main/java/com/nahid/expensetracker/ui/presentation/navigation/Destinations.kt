@@ -14,22 +14,13 @@ sealed class Destinations {
     data object Transections :Destinations()
 
     @Serializable
-    data object Wallet :Destinations()
-
-    @Serializable
-    data object Profile :Destinations()
-
-    @Serializable
     data object AddExpense :Destinations()
 
     @Serializable
+    data class UpdateExpense(val expenseJson: String) : Destinations()
+
+    @Serializable
     data object AboutApp :Destinations()
-
-    @Serializable
-    data object Expense :Destinations()
-
-    @Serializable
-    data object UpdateExpense :Destinations()
 
 
     /*@Serializable

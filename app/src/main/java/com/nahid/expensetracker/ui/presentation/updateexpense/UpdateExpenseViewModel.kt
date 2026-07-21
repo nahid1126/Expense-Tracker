@@ -1,4 +1,4 @@
-package com.nahid.expensetracker.ui.presentation.addexpense
+package com.nahid.expensetracker.ui.presentation.updateexpense
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,23 +22,24 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "AddExpenseViewModel"
 
-class AddExpenseViewModel(
+class UpdateExpenseViewModel(
     private val expenseRepository: ExpenseRepository,
 ) : ViewModel() {
-    private val mutableUiState = MutableStateFlow(AddExpenseUiState())
-    private val mutableUiEvent = MutableSharedFlow<AddExpenseUiEvent>()
+    private val mutableUiState = MutableStateFlow(UpdateExpenseUiState())
+    private val mutableUiEvent = MutableSharedFlow<UpdateExpenseUiEvent>()
 
-    val uiState: StateFlow<AddExpenseUiState> = mutableUiState.asStateFlow()
-    val uiEvent: SharedFlow<AddExpenseUiEvent> = mutableUiEvent.asSharedFlow()
+    val uiState: StateFlow<UpdateExpenseUiState> = mutableUiState.asStateFlow()
+    val uiEvent: SharedFlow<UpdateExpenseUiEvent> = mutableUiEvent.asSharedFlow()
 
 
-    fun updateUiState(uiState: AddExpenseUiState) {
+
+    fun updateUiState(uiState: UpdateExpenseUiState) {
         mutableUiState.value = uiState
     }
 
     fun showMessage(isSuccess: Boolean, message: String) {
         viewModelScope.launch {
-            mutableUiEvent.emit(AddExpenseUiEvent.ShowMessage(Pair(isSuccess, message)))
+            mutableUiEvent.emit(UpdateExpenseUiEvent.ShowMessage(Pair(isSuccess, message)))
         }
     }
 
@@ -109,7 +110,7 @@ class AddExpenseViewModel(
                 updateUiState(uiState.value.copy(isLoading = false))
             } else {
                 val expense = Expense(
-                    id = null,
+                    id = mainState.expenseId,
                     title = mainState.expTitle,
                     amount = mainState.amount,
                     date = mainState.selectedExpDate.longToSimpleDateFormatString(),
@@ -117,11 +118,12 @@ class AddExpenseViewModel(
                     category = mainState.selectedExpCategory
                 )
 
-                when (val result = expenseRepository.insertExpense(expense)) {
+                val result = expenseRepository.updateExpense(expense)
+                when (result) {
                     is Results.Success -> {
-                        showMessage(true, "Expense added successfully")
+                        showMessage(true, "Expense updated successfully")
                         updateUiState(uiState.value.copy(isLoading = false))
-                        mutableUiEvent.emit(AddExpenseUiEvent.NavigateBack)
+                        mutableUiEvent.emit(UpdateExpenseUiEvent.NavigateBack)
                     }
 
                     is Results.Error -> {
@@ -132,17 +134,31 @@ class AddExpenseViewModel(
             }
         }
     }
+
+    fun setInitialData(expense: Expense) {
+        updateUiState(
+            uiState.value.copy(
+                expenseId = expense.id?:0,
+                expTitle = expense.title,
+                amount = expense.amount,
+                selectedExpDate = expense.date.toDateMillis(),
+                selectedExpType = expense.type,
+                selectedExpCategory = expense.category,
+                uiConfig = uiState.value.uiConfig.copy(title = "Update Expense")
+            )
+        )
+    }
 }
 
-sealed interface AddExpenseUiEvent {
-    data class ShowMessage(val message: Pair<Boolean, String>) : AddExpenseUiEvent
-    data object NavigateBack : AddExpenseUiEvent
+sealed interface UpdateExpenseUiEvent {
+    data class ShowMessage(val message: Pair<Boolean, String>) : UpdateExpenseUiEvent
+    data object NavigateBack : UpdateExpenseUiEvent
 }
 
-data class AddExpenseUiState(
+data class UpdateExpenseUiState(
     val isDarkMode: Boolean = false,
     val isLoading: Boolean = false,
-    val expenseId: Int? = null,
+    val expenseId: Int = 0,
     val expTitle: String? = null,
     val showExpDatePicker: Boolean = false,
     val selectedExpDate: Long = 0L,
@@ -154,7 +170,7 @@ data class AddExpenseUiState(
     val expCategories: List<ExpenseCategory> = arrayListOf(),
     val expTypes: List<ExpenseType> = arrayListOf(),
     val uiConfig: MainUIConfig = MainUIConfig(
-        title = "Add Expense",
+        title = "Update Expense",
         showTopBar = true,
         showNavigation = true,
         showSubTitle = false

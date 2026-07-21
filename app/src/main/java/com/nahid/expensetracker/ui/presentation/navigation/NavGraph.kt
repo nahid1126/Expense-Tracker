@@ -11,12 +11,17 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
+import com.nahid.expensetracker.domain.model.Expense
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import com.nahid.expensetracker.ui.presentation.addexpense.AddExpenseScreen
 import com.nahid.expensetracker.ui.presentation.auth.login.LoginScreen
 import com.nahid.expensetracker.ui.presentation.auth.splash.SplashScreen
 import com.nahid.expensetracker.ui.presentation.home.HomeScreen
 import com.nahid.expensetracker.ui.presentation.transections.TransectionsScreen
+import com.nahid.expensetracker.ui.presentation.updateexpense.UpdateExpenseScreen
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -71,7 +76,7 @@ private fun NavGraphBuilder.authGraph(
         )
     }
 
-    composable<Destinations.LoginScreen> {
+    composable<Destinations.LoginScreen>(enterTransition = { defaultEnterTransition() }) {
         LoginScreen(
             toHome = {
                 navController.navigate(Destinations.Home) {
@@ -103,81 +108,48 @@ private fun NavGraphBuilder.homeGraph(
                 user = gmail,
                 onChangeConfiguration = onChangeConfiguration,
                 onShowMessage = onShowMessage,
-                toExit = { onExit() }
+                toExit = { onExit() },
+                onSeeAllClicked = {
+                    navController.navigate(Destinations.Transections)
+                },
+                onUpdate = { expense ->
+                    val expenseJson = Json.encodeToString(expense)
+                    navController.navigate(Destinations.UpdateExpense(expenseJson))
+                }
             )
         }
     }
 
-    composable<Destinations.Transections> {
+    composable<Destinations.Transections>(enterTransition = { defaultEnterTransition() }) {
         TransectionsScreen(
             onChangeConfiguration = onChangeConfiguration,
-            onShowMessage = onShowMessage
+            onShowMessage = onShowMessage,
+            onBack = {
+                navController.navigateUp()
+            },
+            onUpdate = { expense ->
+                val expenseJson = Json.encodeToString(expense)
+                navController.navigate(Destinations.UpdateExpense(expenseJson))
+            }
         )
     }
-
-    composable<Destinations.Wallet> {
-        // Placeholder for Wallet
-    }
-
-    composable<Destinations.Profile> {
-        // Placeholder for Profile
-    }
-
-    composable<Destinations.AddExpense> {
+    composable<Destinations.AddExpense>(enterTransition = { defaultEnterTransition() }) {
         AddExpenseScreen(
             onChangeConfiguration = onChangeConfiguration,
             onShowMessage = onShowMessage, onBack = {
                 navController.navigateUp()
             })
     }
-}
 
-
-
-
-/*private fun NavGraphBuilder.reportGraph(
-    currentUser: User?,
-    navController: NavHostController,
-    onChangeConfiguration: (MainUIConfig) -> Unit,
-    onShowMessage: (String) -> Unit
-) {
-    composable<Destinations.Target>(enterTransition = { defaultEnterTransition() }) {
-        if (currentUser != null) {
-            TargetScreen(
-                user = currentUser,
-                onChangeConfiguration = onChangeConfiguration,
-                onShowMessage = onShowMessage
-            )
-        }
-    }
-
-    composable<Destinations.ProductSummary>(enterTransition = { defaultEnterTransition() }) {
-        if (currentUser != null) {
-            ProductSummaryScreen(
-                user = currentUser,
-                onChangeConfiguration = onChangeConfiguration,
-                onShowMessage = onShowMessage
-            )
-        }
-    }
-
-    composable<Destinations.Program>(enterTransition = { defaultEnterTransition() }) {
-        if (currentUser != null) {
-            ProgramScreen(
-                user = currentUser,
-                onChangeConfiguration = onChangeConfiguration,
-                onShowMessage = onShowMessage,
-                onNavigateToPdfViewer = { filePath ->
-                    navController.navigate(Destinations.PdfViewer(filePath))
-                }
-            )
-        }
-    }
-
-    composable<Destinations.DataAnalysis>(enterTransition = { defaultEnterTransition() }) {
-       *//* DataAnalysisScreen(
+    composable<Destinations.UpdateExpense>(enterTransition = { defaultEnterTransition() }) {
+        val expenseRoute = it.toRoute<Destinations.UpdateExpense>()
+        val expenseJson = expenseRoute.expenseJson
+        val expense = Json.decodeFromString<Expense>(expenseJson)
+        UpdateExpenseScreen(
             onChangeConfiguration = onChangeConfiguration,
-            onShowMessage = onShowMessage
-        )*//*
+            expense = expense,
+            onShowMessage = onShowMessage, onBack = {
+                navController.navigateUp()
+            })
     }
-}*/
+}

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.nahid.expensetracker.ui.presentation.addexpense
+package com.nahid.expensetracker.ui.presentation.updateexpense
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
@@ -43,6 +43,7 @@ import com.nahid.expensetracker.R
 import com.nahid.expensetracker.core.AppConstants
 import com.nahid.expensetracker.core.AppSpacing
 import com.nahid.expensetracker.core.utils.extension.longToSimpleDateFormatString
+import com.nahid.expensetracker.domain.model.Expense
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.CustomDatePickerDialog
@@ -55,11 +56,12 @@ private const val TAG = "AddExpanseScreen"
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun AddExpenseScreen(
-    viewModel: AddExpenseViewModel = koinViewModel(),
+fun UpdateExpenseScreen(
+    viewModel: UpdateExpenseViewModel = koinViewModel(),
+    expense: Expense,
     onChangeConfiguration: (MainUIConfig) -> Unit,
     onShowMessage: (String) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -74,13 +76,19 @@ fun AddExpenseScreen(
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect {
             when (it) {
-                is AddExpenseUiEvent.ShowMessage -> {
+                is UpdateExpenseUiEvent.ShowMessage -> {
                     onShowMessage(it.message.second)
                 }
-               is AddExpenseUiEvent.NavigateBack-> {
+
+                is UpdateExpenseUiEvent.NavigateBack -> {
                     onBack()
                 }
             }
+        }
+    }
+    LaunchedEffect(expense) {
+        if (expense != null) {
+            viewModel.setInitialData(expense)
         }
     }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -207,7 +215,7 @@ fun AddExpenseScreen(
                         .fillMaxWidth()
                         .padding(horizontal = AppSpacing.Size.md)
                 ) {
-                    Text(if (state.expenseId == null) "Add" else "Update")
+                    Text("Update")
                 }
 
             }

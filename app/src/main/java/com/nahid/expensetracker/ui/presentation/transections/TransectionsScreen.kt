@@ -57,6 +57,7 @@ import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.BarChart
 import com.nahid.expensetracker.ui.presentation.component.BarChartData
+import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
 import com.nahid.expensetracker.ui.presentation.home.TransactionList
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
@@ -69,6 +70,8 @@ fun TransectionsScreen(
     viewModel: TransectionsViewModel = koinViewModel(),
     onChangeConfiguration: (MainUIConfig) -> Unit,
     onShowMessage: (String) -> Unit,
+    onBack: () -> Unit,
+    onUpdate: (Expense) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var startAnimation by remember { mutableStateOf(false) }
@@ -84,6 +87,9 @@ fun TransectionsScreen(
             when (it) {
                 is TransectionsUiEvent.ShowMessage -> {
                     onShowMessage(it.message.second)
+                }
+                is TransectionsUiEvent.NavigateBack -> {
+                    onBack()
                 }
             }
         }
@@ -165,7 +171,10 @@ fun TransectionsScreen(
                 }
 
             }
-            FinalExpenseGraphCard(expenses = state.incomeExpenseList)
+            FinalExpenseGraphCard(
+                expenses = state.incomeExpenseList,
+                isIncome = selectedTab == 0
+            )
 
             // Screen Content
             Box(
@@ -189,11 +198,44 @@ fun TransectionsScreen(
                         label = "tabTransition"
                     ) { _ ->
                         if (state.incomeExpenseList.isNotEmpty()) {
-                            TransactionList(list = state.incomeExpenseList)
+                            TransactionList(
+                                list = state.incomeExpenseList,
+                                onDelete = {
+                                    viewModel.updateUiState(
+                                        state.copy(
+                                            showExpenseDeleteDialog = true,
+                                            deleteExpenseItem = it
+                                        )
+                                    )
+                                },
+                                onItemClick = { onUpdate(it) }
+                            )
                         }
                     }
                 }
             }
+        }
+        if (state.showExpenseDeleteDialog) {
+            ConfirmationDialog(
+                title = "Warning !",
+                message = "Are You Sure Want to Delete This Item ?",
+                confirmText = "OK",
+                dismissText = "Cancel",
+                onDismiss = {
+                    viewModel.updateUiState(
+                        state.copy(
+                            showExpenseDeleteDialog = false,
+                            deleteExpenseItem = null
+                        )
+                    )
+                },
+                onConfirm = {
+                    if (state.deleteExpenseItem != null) {
+                        viewModel.deleteExpense()
+                    }
+                    viewModel.updateUiState(state.copy(showExpenseDeleteDialog = false))
+                }
+            )
         }
         if (state.isLoading) {
             AnimatedProgressDialog()
@@ -202,7 +244,7 @@ fun TransectionsScreen(
 }
 
 @Composable
-fun FinalExpenseGraphCard(expenses: List<Expense>) {
+fun FinalExpenseGraphCard(expenses: List<Expense>, isIncome: Boolean) {
     val monthMap = mapOf(
         "Jan" to "January", "Feb" to "February", "Mar" to "March", "Apr" to "April",
         "May" to "May", "Jun" to "June", "Jul" to "July", "Aug" to "August",
@@ -243,7 +285,7 @@ fun FinalExpenseGraphCard(expenses: List<Expense>) {
 
     val graphData = remember(selectedMonth, expenses) {
         if (selectedMonth.isEmpty()) return@remember emptyList()
-        expenses.filter {
+        expenses.asSequence().filter {
             val part = it.date.split("-").getOrNull(1) ?: ""
             val fullName = monthMap[part] ?: part
             fullName == selectedMonth
@@ -253,7 +295,7 @@ fun FinalExpenseGraphCard(expenses: List<Expense>) {
                 BarChartData(day, list.sumOf { it.amount }.toFloat())
             }
             .sortedBy { it.label }
-            .take(8)
+            .take(8).toList()
     }
 
     if (graphData.isEmpty() && selectedMonth.isNotEmpty()) {
@@ -262,15 +304,6 @@ fun FinalExpenseGraphCard(expenses: List<Expense>) {
 
     val totalAmount = remember(graphData) {
         graphData.sumOf { it.value.toDouble() }
-    }
-
-    val dynamicMaxLimit = remember(graphData) {
-        val maxValue = graphData.maxOfOrNull { it.value } ?: 10000f
-        when {
-            maxValue <= 10000f -> 10000f
-            maxValue <= 20000f -> 20000f
-            else -> 50000f
-        }
     }
 
     val dateRangeText = remember(selectedMonth, expenses) {
@@ -396,7 +429,7 @@ fun FinalExpenseGraphCard(expenses: List<Expense>) {
                             MaterialTheme.colorScheme.secondary,
                             MaterialTheme.colorScheme.tertiary
                         ),
-                        maxLimit = dynamicMaxLimit,
+                        isIncome = isIncome,
                         currencySymbol = "৳",
                         showYAxis = true,
                         showPercentBarTop = false,

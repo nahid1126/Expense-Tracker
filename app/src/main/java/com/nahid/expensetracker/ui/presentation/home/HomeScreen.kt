@@ -8,10 +8,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +67,7 @@ import com.nahid.expensetracker.domain.model.Expense
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
+import com.nahid.expensetracker.ui.presentation.component.SwipeToDeleteContainer
 import com.nahid.expensetracker.ui.theme.Black
 import com.nahid.expensetracker.ui.theme.DarkGreen
 import com.nahid.expensetracker.ui.theme.Gray
@@ -87,6 +87,8 @@ fun HomeScreen(
     user: String,
     onShowMessage: (String) -> Unit,
     toExit: () -> Unit = {},
+    onUpdate: (Expense) -> Unit,
+    onSeeAllClicked: () -> Unit,
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -162,7 +164,10 @@ fun HomeScreen(
                     "See All", style = Typography.bodyLarge.copy(
                         color = Gray,
                         fontWeight = FontWeight.Normal
-                    )
+                    ),
+                    modifier = Modifier.clickable {
+                        onSeeAllClicked()
+                    }
                 )
             }
             Spacer(Modifier.height(AppSpacing.Size.md))
@@ -177,7 +182,10 @@ fun HomeScreen(
                     animationSpec = tween(600)
                 ) + fadeOut()
             ) {
-                TransactionList(list = state.topExpenseEntityList)
+                TransactionList(
+                    list = state.topExpenseEntityList,
+                    onItemClick = { onUpdate(it) }
+                )
             }
         }
 
@@ -286,22 +294,35 @@ fun RowItem(title: String, value: String, icon: ImageVector, color: Color, modif
 }
 
 @Composable
-fun TransactionList(list: List<Expense>) {
+fun TransactionList(
+    list: List<Expense>,
+    onDelete: (Expense) -> Unit = {},
+    onItemClick: (Expense) -> Unit,
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(AppSpacing.Size.sm)
     ) {
-        items(list) { expense ->
-            TransactionItem(expense = expense)
+        items(list, key = { it.id ?: 0 }) { expense ->
+            SwipeToDeleteContainer(
+                item = expense,
+                onDelete = { onDelete(expense) }
+            ) {
+                TransactionItem(expense = expense, onClick = {
+                    onItemClick(it)
+                })
+            }
         }
     }
 }
 
+
 @Composable
-fun TransactionItem(expense: Expense) {
+fun TransactionItem(expense: Expense, onClick: (Expense) -> Unit) {
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable { onClick(expense) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

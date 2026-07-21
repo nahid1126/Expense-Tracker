@@ -86,6 +86,46 @@ class ExpenseRepositoryImpl(
         }
     }
 
+    override suspend fun updateExpense(expense: Expense): Results<Boolean> {
+        return try {
+            // 1. Update in local database
+            expenseDao.updateExpense(expense.toEntity())
+            
+            // 2. Update in Firebase (we can reuse the set logic)
+            insertExpenseToFirebase(expense)
+            
+            Results.Success(true)
+        } catch (e: Exception) {
+            Results.Error(e.getSpecificException())
+        }
+    }
+
+
+    override suspend fun deleteExpense(expense: Expense): Results<Boolean> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Results.Error(AppException.AuthException("User not logged in"))
+
+            // 1. Delete from local database
+            expense.id?.let { expenseDao.deleteExpenseById(it) }
+
+            // 2. Delete from Firebase
+            if (expense.id != null) {
+                db.collection("users")
+                    .document(uid)
+                    .collection("expenses")
+                    .document(expense.id.toString())
+                    .delete()
+                    .await()
+            }
+            
+            Results.Success(true)
+        } catch (e: Exception) {
+            Log.e(TAG, "deleteExpense: ${e.message}")
+            Results.Error(e.getSpecificException())
+        }
+    }
+
     override suspend fun insertExpenseToFirebase(expense: Expense): Results<Boolean> {
         return try {
             val uid = auth.currentUser?.uid

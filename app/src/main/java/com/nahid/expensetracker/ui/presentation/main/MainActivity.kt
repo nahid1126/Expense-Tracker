@@ -329,7 +329,7 @@ fun App(
         },
         bottomBar = {
             val showBottomBar = currentRoute?.let { route ->
-                listOf("Home", "Wallet", "Profile").any { route.contains(it) }
+                listOf("Home", "Transections").any { route.contains(it) }
             } ?: false
 
             AnimatedVisibility(
