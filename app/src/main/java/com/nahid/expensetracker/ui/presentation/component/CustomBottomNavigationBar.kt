@@ -29,12 +29,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import com.nahid.expensetracker.ui.presentation.navigation.Destinations
 import com.nahid.expensetracker.ui.theme.Gray
 
 @Composable
 fun CustomBottomNavigationBar(
-    currentRoute: String?,
+    currentDestination: NavDestination?,
     onItemClick: (Destinations) -> Unit,
     onFabClick: () -> Unit
 ) {
@@ -78,9 +80,7 @@ fun CustomBottomNavigationBar(
                 Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
                     NavBarIcon(
                         item = leftItem,
-                        isSelected = currentRoute?.contains(
-                            leftItem.destination::class.simpleName ?: ""
-                        ) == true,
+                        isSelected = currentDestination?.hasRoute(leftItem.destination::class) == true,
                         activeColor = activeColor,
                         inactiveColor = inactiveColor,
                         onClick = { onItemClick(leftItem.destination) }
@@ -93,9 +93,7 @@ fun CustomBottomNavigationBar(
                 Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
                     NavBarIcon(
                         item = rightItem,
-                        isSelected = currentRoute?.contains(
-                            rightItem.destination::class.simpleName ?: ""
-                        ) == true,
+                        isSelected = currentDestination?.hasRoute(rightItem.destination::class) == true,
                         activeColor = activeColor,
                         inactiveColor = inactiveColor,
                         onClick = { onItemClick(rightItem.destination) }

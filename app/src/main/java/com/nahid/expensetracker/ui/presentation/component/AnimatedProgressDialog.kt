@@ -48,7 +48,7 @@ fun AnimatedProgressDialog(modifier: Modifier = Modifier.size(100.dp)) {
 
     Dialog(onDismissRequest = {
 
-    }, properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)) {
+    }, properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = true)) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -83,7 +83,7 @@ fun AnimatedProgressDialog(modifier: Modifier = Modifier.size(100.dp)) {
 fun AnimatedLottieProgressDialog(modifier: Modifier = Modifier.size(100.dp)) {
     Dialog(onDismissRequest = {
 
-    }, properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)) {
+    }, properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = true)) {
         Box(
             modifier = Modifier
                 .fillMaxSize()

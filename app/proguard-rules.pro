@@ -36,6 +36,9 @@
     @kotlinx.serialization.SerialName <fields>;
 }
 
+# Keep Destination class names for Navigation
+-keepnames class com.nahid.expensetracker.ui.presentation.navigation.Destinations** { *; }
+
 ############################################
 # 🔷 KOIN (VIEWMODELS)
 ############################################

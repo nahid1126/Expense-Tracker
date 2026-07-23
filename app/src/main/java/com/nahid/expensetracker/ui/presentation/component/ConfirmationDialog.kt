@@ -59,7 +59,7 @@ fun ConfirmationDialog(
                 Text(dismissText, color = MaterialTheme.colorScheme.primary)
             }
         },
-        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false),
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = true),
     )
 
 }

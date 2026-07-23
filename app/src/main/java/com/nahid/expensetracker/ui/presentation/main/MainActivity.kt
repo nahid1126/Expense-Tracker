@@ -7,8 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,7 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.WavingHand
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import com.nahid.expensetracker.core.AppConstants
 import com.nahid.expensetracker.core.AppSpacing
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
@@ -89,7 +88,6 @@ fun App(
     val navController = rememberNavController()
     val currentBackStack by navController.currentBackStackEntryAsState()
     val context = LocalContext.current
-    val currentRoute = currentBackStack?.destination?.route
     val snackBarHostState = remember { SnackbarHostState() }
     val gmail = uiState.gmail
 
@@ -124,11 +122,6 @@ fun App(
     }
     if (uiState.isLoading) {
         AnimatedProgressDialog()
-    }
-    var rotateDegree = remember { Animatable(0f) }
-    LaunchedEffect(currentRoute) {
-        rotateDegree.snapTo(0f)
-        rotateDegree.animateTo(180f, animationSpec = tween(500, easing = LinearEasing))
     }
     if (uiState.showLogoutDialog) {
         ConfirmationDialog(
@@ -301,35 +294,30 @@ fun App(
                         if (uiState.uiConfig.showNavigation) {
                             IconButton(
                                 onClick = {
-                                    val entry = navController.previousBackStackEntry
-                                    if (entry != null) {
-                                        navController.popBackStack()
-                                    }
+                                    navController.popBackStack()
                                 }, modifier = Modifier
                                     .padding(
                                         end = (AppConstants.APP_MARGIN / 2).dp
                                     )
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ArrowForward,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.graphicsLayer {
-                                        rotationZ = rotateDegree.value
-                                    }
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
 
 
                         }
-                    }, modifier = Modifier.background(MaterialTheme.colorScheme.primary)
+                    },
+modifier = Modifier.background(MaterialTheme.colorScheme.primary)
                 )
             }
 
         },
         bottomBar = {
-            val showBottomBar = currentRoute?.let { route ->
-                listOf("Home", "Transections").any { route.contains(it) }
+            val showBottomBar = currentBackStack?.destination?.let { dest ->
+                dest.hasRoute(Destinations.Home::class) || dest.hasRoute(Destinations.Transections::class)
             } ?: false
 
             AnimatedVisibility(
@@ -342,7 +330,7 @@ fun App(
                 ) + fadeOut()
             ) {
                 CustomBottomNavigationBar(
-                    currentRoute = currentRoute,
+                    currentDestination = currentBackStack?.destination,
                     onItemClick = { destination ->
                         navController.navigate(destination) {
                             popUpTo(navController.graph.startDestinationId) {

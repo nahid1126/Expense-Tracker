@@ -101,7 +101,7 @@ class AddExpenseViewModel(
             } else if (mainState.selectedExpCategory.isNullOrEmpty()) {
                 showMessage(false, "Expense Category Required")
                 updateUiState(uiState.value.copy(isLoading = false))
-            } else if (mainState.amount == 0) {
+            } else if (mainState.amount.isEmpty() || mainState.amount.toIntOrNull() == 0) {
                 showMessage(false, "Expense Amount Required")
                 updateUiState(uiState.value.copy(isLoading = false))
             } else if (mainState.selectedExpDate == 0L) {
@@ -111,7 +111,7 @@ class AddExpenseViewModel(
                 val expense = Expense(
                     id = null,
                     title = mainState.expTitle,
-                    amount = mainState.amount,
+                    amount = mainState.amount.toIntOrNull() ?: 0,
                     date = mainState.selectedExpDate.longToSimpleDateFormatString(),
                     type = mainState.selectedExpType,
                     category = mainState.selectedExpCategory
@@ -148,7 +148,7 @@ data class AddExpenseUiState(
     val selectedExpDate: Long = 0L,
     val selectedExpType: String? = null,
     val selectedExpTypeId: Long = 0,
-    val amount: Int = 0,
+    val amount: String = "",
     val selectedExpCategory: String? = null,
     val selectedExpCategoryId: Long = 0,
     val expCategories: List<ExpenseCategory> = arrayListOf(),

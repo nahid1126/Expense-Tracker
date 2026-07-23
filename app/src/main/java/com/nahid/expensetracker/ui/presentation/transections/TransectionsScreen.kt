@@ -1,5 +1,6 @@
 package com.nahid.expensetracker.ui.presentation.transections
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -76,6 +77,10 @@ fun TransectionsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var startAnimation by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
+
+    BackHandler {
+        onBack()
+    }
 
     LaunchedEffect(Unit) {
         onChangeConfiguration(state.uiConfig)

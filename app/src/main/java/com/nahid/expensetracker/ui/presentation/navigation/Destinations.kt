@@ -18,12 +18,4 @@ sealed class Destinations {
 
     @Serializable
     data class UpdateExpense(val expenseJson: String) : Destinations()
-
-    @Serializable
-    data object AboutApp :Destinations()
-
-
-    /*@Serializable
-    data class WalletDetails(val customerJson: String) : Destinations()*/
-
 }

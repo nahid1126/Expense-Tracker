@@ -158,10 +158,11 @@ fun UpdateExpenseScreen(
             //var amount by remember { mutableStateOf(if (state.amount == 0.0) "" else state.amount.toString()) }
 
             StandardInputField(
-                value = if (state.amount == 0) "" else state.amount.toString(),
+                value = state.amount,
                 onValueChange = {
-                    val amount = it.toIntOrNull() ?: 0
-                    viewModel.updateUiState(state.copy(amount = amount))
+                    if (it.all { char -> char.isDigit() }) {
+                        viewModel.updateUiState(state.copy(amount = it))
+                    }
                 },
                 label = "Amount(৳)", placeholder = "1xxxx",
                 singleLine = true,
