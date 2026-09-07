@@ -1,5 +1,6 @@
 package com.nahid.expensetracker.ui.presentation.transections
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -66,6 +67,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+private const val TAG = "TransectionsScreen"
 @Composable
 fun TransectionsScreen(
     viewModel: TransectionsViewModel = koinViewModel(),
@@ -178,7 +180,11 @@ fun TransectionsScreen(
             }
             FinalExpenseGraphCard(
                 expenses = state.incomeExpenseList,
-                isIncome = selectedTab == 0
+                isIncome = selectedTab == 0,
+                onSelectedMonth = {
+                    Log.d(TAG, "TransectionsScreen: $it")
+                    viewModel.updateUiState(state.copy(selectedMonth = it))
+                }
             )
 
             // Screen Content
@@ -249,7 +255,11 @@ fun TransectionsScreen(
 }
 
 @Composable
-fun FinalExpenseGraphCard(expenses: List<Expense>, isIncome: Boolean) {
+fun FinalExpenseGraphCard(
+    expenses: List<Expense>,
+    isIncome: Boolean,
+    onSelectedMonth: (String) -> Unit,
+) {
     val monthMap = mapOf(
         "Jan" to "January", "Feb" to "February", "Mar" to "March", "Apr" to "April",
         "May" to "May", "Jun" to "June", "Jul" to "July", "Aug" to "August",
@@ -285,6 +295,10 @@ fun FinalExpenseGraphCard(expenses: List<Expense>, isIncome: Boolean) {
     LaunchedEffect(initialMonth) {
         selectedMonth = initialMonth
     }
+    LaunchedEffect(selectedMonth) {
+        val shortMonth = monthMap.entries.firstOrNull { it.value == selectedMonth }?.key ?: selectedMonth
+        onSelectedMonth(shortMonth)
+    }
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -299,8 +313,8 @@ fun FinalExpenseGraphCard(expenses: List<Expense>, isIncome: Boolean) {
             .map { (day, list) ->
                 BarChartData(day, list.sumOf { it.amount }.toFloat())
             }
-            .sortedBy { it.label }
-            .take(8).toList()
+            .sortedBy { it.label.toIntOrNull() ?: 0 }
+            .toList()
     }
 
     if (graphData.isEmpty() && selectedMonth.isNotEmpty()) {
@@ -344,9 +358,10 @@ fun FinalExpenseGraphCard(expenses: List<Expense>, isIncome: Boolean) {
                 ) {
                     Text(
                         text = "Select Month: $selectedMonth",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     )
                     Icon(
                         Icons.Default.ArrowDropDown,

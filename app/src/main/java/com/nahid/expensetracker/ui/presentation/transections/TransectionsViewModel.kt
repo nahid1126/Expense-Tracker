@@ -1,5 +1,6 @@
 package com.nahid.expensetracker.ui.presentation.transections
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nahid.expensetracker.core.Results
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val TAG = "TransectionsViewModel"
 class TransectionsViewModel(private val expenseRepository: ExpenseRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow(TransectionsUiState())
     private val mutableUiEvent = MutableSharedFlow<TransectionsUiEvent>()
@@ -23,7 +25,16 @@ class TransectionsViewModel(private val expenseRepository: ExpenseRepository) : 
     val uiState = combine(
         mutableUiState, expenseRepository.getAllExpense()
     ) { state, expense ->
-        val filterExpend = expense.filter { it.type == state.selectedTab }
+        val filterExpend = expense.filter {
+            if (state.selectedMonth.isNullOrEmpty()) {
+                it.type == state.selectedTab
+            } else {
+                it.type == state.selectedTab && it.date.contains(
+                    state.selectedMonth
+                )
+            }
+        }
+        Log.d(TAG, "filterData: $filterExpend")
         state.copy(
             incomeExpenseList = filterExpend
         )
@@ -67,7 +78,8 @@ sealed interface TransectionsUiEvent {
 data class TransectionsUiState(
     val isDarkMode: Boolean = false,
     val isLoading: Boolean = false,
-    val selectedTab: String? = null,
+    val selectedTab: String? = "Income",
+    val selectedMonth: String? = null,
     val incomeExpenseList: List<Expense> = arrayListOf(),
     val deleteExpenseItem: Expense? = null,
     val showExpenseDeleteDialog: Boolean = false,
