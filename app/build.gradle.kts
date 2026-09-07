@@ -12,9 +12,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("keystore.jks")
-            storePassword = "n@hid26"
-            keyAlias = "key0"
-            keyPassword = "n@hid26"
+            storePassword = "N@hid@26"
+            keyAlias = "keyExpense"
+            keyPassword = "N@hid@26"
         }
     }
     compileSdk = 36
