@@ -33,15 +33,21 @@ The Room migration preserves version 1 rows. Since those rows did not record acc
 The current layout is available in Android Studio through the Dashboard and Transactions Compose previews.
 
 <p align="center">
-  <img width="200" height="400" alt="Login Screen" src="https://github.com/user-attachments/assets/1dd45cf1-b134-46ba-86be-08dc8aef9493" />
+  <img width="200" height="400" alt="Login Screen" src="https://github.com/user-attachments/assets/381f3bfd-d16c-4a25-8327-13060a978e4f" />
+  <img width="200" height="400" alt="Login Screen Dark" src="https://github.com/user-attachments/assets/cd13848e-542b-4f03-be49-0e75be8a9a0a" />
   &nbsp;&nbsp;&nbsp;
-  <img width="200" height="400" alt="Home Dashboard" src="https://github.com/user-attachments/assets/f609c4cd-c308-48cc-a218-4398d762944c" />
+  <img width="200" height="400" alt="Dashboard" src="https://github.com/user-attachments/assets/29cca38b-27ff-4170-a8fd-64003c3a61af" />
+  <img width="200" height="400" alt="Dashboard Dark" src="https://github.com/user-attachments/assets/d1ca71d7-00ea-47fa-94e6-dd96fc4b8e31" />
   &nbsp;&nbsp;&nbsp;
-  <img width="200" height="400" alt="Add Expense" src="https://github.com/user-attachments/assets/b6e777fc-bfd6-448a-8930-acb362f80164" />
+  <img width="200" height="400" alt="Add Expense" src="https://github.com/user-attachments/assets/7c8b99a4-0198-49bf-b823-f7fb3f255546" />
+  <img width="200" height="400" alt="Add Expense Dark" src="https://github.com/user-attachments/assets/064a9226-767a-4b7e-a07f-29a3ce301d04" />
   &nbsp;&nbsp;&nbsp;
-  <img width="200" height="400" alt="Transaction History Income" src="https://github.com/user-attachments/assets/dce5bcd3-ac76-445c-ba4a-87eeb84e5a44" />
+  <img width="200" height="400" alt="Transaction History" src="https://github.com/user-attachments/assets/7583590f-1a0e-45ce-a08b-5b188c8c9660" />
+  <img width="200" height="400" alt="Transaction History Dark" src="https://github.com/user-attachments/assets/878dcb6d-62c0-4b85-88d9-5774325375c0" />
   &nbsp;&nbsp;&nbsp;
-  <img width="200" height="400" alt="Transaction History Expense" src="https://github.com/user-attachments/assets/bd39bcad-9b0d-4d84-8853-ccbd24b220bc" />
+  <img width="200" height="400" alt="Transaction History Expense" src="https://github.com/user-attachments/assets/4c8acf3f-0103-4e00-8769-4faedda0c9e9" />
+  <img width="200" height="400" alt="Transaction History Expense" src="https://github.com/user-attachments/assets/cdd6d191-a828-43d9-87bd-59d023d61695" />
+
 </p>
 
 ## Author
