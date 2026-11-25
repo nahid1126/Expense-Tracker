@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.google.firebase.auth.FirebaseUser
+import com.nahid.expensetracker.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,7 +17,8 @@ class AppPreference(private val dataStore: DataStore<Preferences>) {
         val USER_GMAIL = stringPreferencesKey("user_gmail")
         val USER_NAME = stringPreferencesKey("user_name")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
-        val MODE = booleanPreferencesKey("mode")
+        private val LEGACY_DARK_MODE = booleanPreferencesKey("mode")
+        private val THEME_MODE = stringPreferencesKey("theme_mode")
         val HAS_LOCATION = booleanPreferencesKey("has_location")
     }
 
@@ -74,23 +75,21 @@ class AppPreference(private val dataStore: DataStore<Preferences>) {
         }
     }
 
-    suspend fun isDarkMode(isDark: Boolean): Boolean {
-        return try {
-            dataStore.edit {
-                it[MODE] = isDark
+    suspend fun saveThemeMode(mode: ThemeMode) {
+        dataStore.edit {
+            it[THEME_MODE] = mode.name
+            it.remove(LEGACY_DARK_MODE)
+        }
+    }
+
+    fun readThemeMode(): Flow<ThemeMode> = dataStore.data.map { preferences ->
+        ThemeMode.entries.firstOrNull { it.name == preferences[THEME_MODE] }
+            ?: when (preferences[LEGACY_DARK_MODE]) {
+                true -> ThemeMode.DARK
+                false -> ThemeMode.LIGHT
+                null -> ThemeMode.SYSTEM
             }
-            true
-        } catch (e: Exception) {
-            return false
-        }
     }
-
-    fun readIsDarkMode(): Flow<Boolean> {
-        return dataStore.data.map {
-            it[MODE] ?: false
-        }
-    }
-
 
     suspend fun putHasLocation(hasLocation: Boolean): Boolean {
         return try {

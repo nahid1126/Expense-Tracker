@@ -12,9 +12,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -28,26 +30,35 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavDestination.Companion.hasRoute
+import com.nahid.expensetracker.domain.model.ThemeMode
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
 import com.nahid.expensetracker.ui.presentation.component.CustomBottomNavigationBar
@@ -65,8 +76,20 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel: MainViewModel = koinViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
-            ExpenseTrackerTheme(dynamicColor = false) {
-                App(viewModel, state)
+            val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+            val darkTheme = when (themeMode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            SideEffect {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !darkTheme
+                    isAppearanceLightNavigationBars = !darkTheme
+                }
+            }
+            ExpenseTrackerTheme(darkTheme = darkTheme, dynamicColor = false) {
+                App(viewModel, state, darkTheme)
             }
         }
     }
@@ -76,7 +99,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun App(
     viewModel: MainViewModel,
-    uiState: MainUiState
+    uiState: MainUiState,
+    darkTheme: Boolean,
 ){
     val navController = rememberNavController()
     val currentBackStack by navController.currentBackStackEntryAsState()
@@ -163,6 +187,9 @@ fun App(
                     ),
                     actions = {
                         if (config.showOptionMenu) {
+                            ThemeSwitch(darkTheme) { checked ->
+                                viewModel.setThemeMode(if (checked) ThemeMode.DARK else ThemeMode.LIGHT)
+                            }
                             IconButton(onClick = { viewModel.updateUiState(uiState.copy(showLogoutDialog = true)) }) {
                                 Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
                             }
@@ -235,6 +262,29 @@ fun App(
 
 }
 
+
+@Composable
+private fun ThemeSwitch(darkTheme: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Switch(
+        checked = darkTheme,
+        onCheckedChange = onCheckedChange,
+        modifier = Modifier.semantics { contentDescription = "Dark mode" },
+        colors = SwitchDefaults.colors(
+            uncheckedTrackColor = colors.primaryContainer,
+            uncheckedThumbColor = colors.surfaceContainerLow,
+            uncheckedBorderColor = colors.outlineVariant,
+            uncheckedIconColor = colors.primary,
+        ),
+        thumbContent = {
+            Icon(
+                imageVector = if (darkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+            )
+        },
+    )
+}
 
 private fun homeGreeting(hour: Int): String = when (hour) {
     in 5..11 -> "Good morning"

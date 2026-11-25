@@ -74,7 +74,7 @@ private fun NavigationDock(
     ) {
         Surface(
             modifier = Modifier
-                .widthIn(max = 280.dp)
+                .widthIn(max = 250.dp)
                 .fillMaxWidth()
                 .padding(top = 16.dp),
             shape = BottomNavCutoutShape(),
@@ -85,8 +85,7 @@ private fun NavigationDock(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 0.dp, vertical = 0.dp),
+                    .navigationBarsPadding(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -97,7 +96,7 @@ private fun NavigationDock(
                     onClick = { onItemClick(Destinations.Home) },
                     modifier = Modifier.weight(1f),
                 )
-                Spacer(Modifier.width(58.dp))
+                Spacer(Modifier.width(40.dp))
                 NavBarItem(
                     label = "Transactions",
                     icon = Icons.AutoMirrored.Filled.ReceiptLong,
@@ -131,10 +130,6 @@ private fun NavigationDock(
                         )
                     }
                 }
-                Text(
-                    "Add", color = colors.primary, style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
             }
         }
     }
@@ -159,12 +154,12 @@ private fun NavBarItem(
     )
     Column(
         modifier
-            .clip(RoundedCornerShape(21.dp))
+            .clip(RoundedCornerShape(10.dp))
             .selectable(selected = selected, role = Role.Tab, onClick = onClick)
-            .heightIn(min = 52.dp)
+            .heightIn(min = 20.dp)
             .padding(horizontal = 4.dp, vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Box(
             Modifier

@@ -354,7 +354,7 @@ private fun CategoryReport(state: TransectionsUiState) {
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.matchParentSize()) {
-                val strokeWidth = 18.dp.toPx()
+                val strokeWidth = 50.dp.toPx()
                 val inset = strokeWidth / 2
                 var angle = -90f
                 categories.forEachIndexed { index, category ->
@@ -377,14 +377,14 @@ private fun CategoryReport(state: TransectionsUiState) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                Text(caption, style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant,
+                Text(caption, style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant,
                     textAlign = TextAlign.Center)
                 Text(
                     total.asTaka(),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     maxLines = 1,
-                    autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 26.sp),
+                    autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 18.sp),
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }

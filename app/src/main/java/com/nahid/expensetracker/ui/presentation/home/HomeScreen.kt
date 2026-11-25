@@ -1,5 +1,6 @@
 package com.nahid.expensetracker.ui.presentation.home
 
+import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -122,7 +123,12 @@ private fun Dashboard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Recent transactions", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "Recent transactions",
+                        Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
                     TextButton(onClick = onSeeAllClicked) {
                         Text("See all")
                         Icon(
@@ -271,7 +277,12 @@ private fun SpendingBreakdown(categories: List<CategorySpending>) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Spending by category", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Spending by category",
+                Modifier.weight(1f),
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.onBackground,
+            )
             Text("All time", color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
         }
         if (categories.isEmpty()) {
@@ -396,7 +407,8 @@ internal fun TransactionItem(
     }
 }
 
-@Preview(name = "Dashboard", widthDp = 393, heightDp = 750)
+@Preview(name = "Dashboard Light", widthDp = 393, heightDp = 750)
+@Preview(name = "Dashboard Dark", widthDp = 393, heightDp = 750, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun DashboardPreview() {
     val expenses = listOf(
@@ -404,7 +416,7 @@ private fun DashboardPreview() {
         Expense(id = 2, title = "Metro pass", amount = 1600, date = "2026-11-24", type = "Expense", category = "Transport", isSynced = true),
         Expense(id = 3, title = "Bookshop", amount = 840, date = "2026-11-23", type = "Expense", category = "Shopping", isSynced = true),
     )
-    ExpenseTrackerTheme(darkTheme = false, dynamicColor = false) {
+    ExpenseTrackerTheme(dynamicColor = false) {
         Dashboard(
             HomeUiState(totalIncome = 42000, totalExpense = 4790, totalBalance = 37210,
                 spending = spendingBreakdown(expenses), recentTransactions = expenses),

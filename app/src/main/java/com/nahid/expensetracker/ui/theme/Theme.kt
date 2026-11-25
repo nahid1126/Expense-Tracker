@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -25,6 +26,7 @@ private val DarkColorScheme = darkColorScheme(
     onTertiaryContainer = Color(0xFFF6D9AF),
     background = Color(0xFF141916),
     surface = Color(0xFF141916),
+    onBackground = Color(0xFFE9EDE6),
     onSurface = Color(0xFFE9EDE6),
     onSurfaceVariant = Color(0xFFBEC8BE),
     surfaceContainerLow = Color(0xFF1C241F),
@@ -43,6 +45,7 @@ private val LightColorScheme = lightColorScheme(
     onTertiaryContainer = Color(0xFF624223),
     background = Color(0xFFF7F5EF),
     surface = Color(0xFFF7F5EF),
+    onBackground = Color(0xFF1A231E),
     onSurface = Color(0xFF1A231E),
     onSurfaceVariant = Color(0xFF505D54),
     surfaceContainerLow = Color(0xFFFFFEFA),
@@ -71,7 +74,8 @@ fun ExpenseTrackerTheme(
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
-            content = content
-        )
+        ) {
+            CompositionLocalProvider(LocalContentColor provides colorScheme.onBackground, content = content)
+        }
     }
 }

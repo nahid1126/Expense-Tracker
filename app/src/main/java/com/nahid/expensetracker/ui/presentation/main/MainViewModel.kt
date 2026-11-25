@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
 import com.nahid.expensetracker.data.local.AppPreference
 import com.nahid.expensetracker.domain.model.User
+import com.nahid.expensetracker.domain.model.ThemeMode
+import java.io.IOException
 import com.nahid.expensetracker.domain.repository.AuthRepository
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -27,6 +30,22 @@ class MainViewModel(
     ) { state, gmail ->
         state.copy(gmail = gmail)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), MainUiState())
+
+    val themeMode = appPreference.readThemeMode()
+        .catch { error ->
+            if (error is IOException) emit(ThemeMode.SYSTEM) else throw error
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), ThemeMode.SYSTEM)
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch {
+            try {
+                appPreference.saveThemeMode(mode)
+            } catch (_: IOException) {
+                showMessage("Could not save your appearance preference.")
+            }
+        }
+    }
 
     private val mutableUiEvent = MutableSharedFlow<UiEvent>()
 
@@ -57,7 +76,6 @@ sealed interface UiEvent {
 }
 
 data class MainUiState(
-    val isDarkMode: Boolean = false,
     val isLoading: Boolean = false,
     val user: User? = null,
     val firebaseUser: FirebaseUser? = null,

@@ -43,7 +43,6 @@ import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.theme.Black
 import com.nahid.expensetracker.ui.theme.PurpleGrey80
-import com.nahid.expensetracker.ui.theme.White
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
 
@@ -138,7 +137,8 @@ fun LoginScreen(
                         viewModel.googleLogin()
                     },
                     colors = ButtonDefaults.elevatedButtonColors(
-                        White
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                     ),
                     modifier = Modifier
                         .fillMaxWidth(.80f)
