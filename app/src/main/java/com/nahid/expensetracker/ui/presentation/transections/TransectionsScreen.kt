@@ -1,73 +1,79 @@
 package com.nahid.expensetracker.ui.presentation.transections
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.nahid.expensetracker.core.AppSpacing
-import com.nahid.expensetracker.core.utils.extension.onSingleClick
 import com.nahid.expensetracker.domain.model.Expense
-import com.nahid.expensetracker.domain.model.NavigationButton
+import com.nahid.expensetracker.domain.model.asTaka
+import com.nahid.expensetracker.domain.model.asTransactionDate
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
-import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.BarChart
-import com.nahid.expensetracker.ui.presentation.component.BarChartData
+import com.nahid.expensetracker.ui.presentation.component.CashFlowPeriod
 import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
-import com.nahid.expensetracker.ui.presentation.home.TransactionList
-import kotlinx.coroutines.delay
-import org.koin.compose.viewmodel.koinViewModel
-import java.text.SimpleDateFormat
-import java.util.Calendar
+import com.nahid.expensetracker.ui.presentation.component.SwipeToDeleteContainer
+import com.nahid.expensetracker.ui.presentation.component.TransactionFilters
+import com.nahid.expensetracker.ui.presentation.home.TransactionItem
+import com.nahid.expensetracker.ui.theme.ExpenseTrackerTheme
+import java.text.NumberFormat
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.util.Locale
+import org.koin.compose.viewmodel.koinViewModel
 
-private const val TAG = "TransectionsScreen"
 @Composable
 fun TransectionsScreen(
     viewModel: TransectionsViewModel = koinViewModel(),
@@ -77,388 +83,359 @@ fun TransectionsScreen(
     onUpdate: (Expense) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var startAnimation by remember { mutableStateOf(false) }
-    var selectedTab by remember { mutableIntStateOf(0) }
-
-    BackHandler {
-        onBack()
-    }
-
-    LaunchedEffect(Unit) {
+    BackHandler(onBack = onBack)
+    LaunchedEffect(viewModel) {
         onChangeConfiguration(state.uiConfig)
-        delay(200)
-        startAnimation = true
-    }
-    LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect {
-            when (it) {
-                is TransectionsUiEvent.ShowMessage -> {
-                    onShowMessage(it.message.second)
-                }
-                is TransectionsUiEvent.NavigateBack -> {
-                    onBack()
-                }
-            }
-        }
+        viewModel.uiMessage.collect { onShowMessage(it) }
     }
 
-
-    LaunchedEffect(selectedTab) {
-        val tabName = if (selectedTab == 0) "Income" else "Expense"
-        viewModel.updateUiState(state.copy(selectedTab = tabName))
-    }
-
-    val tabs = listOf(
-        NavigationButton("Income", Icons.Default.AccountBalanceWallet),
-        NavigationButton("Expense", Icons.Default.Payments),
+    TransactionHistory(
+        state,
+        onTypeSelect = viewModel::selectType,
+        onMonthSelect = viewModel::selectMonth,
+        onUpdate = onUpdate,
+        onDelete = viewModel::requestDelete,
     )
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    state.pendingDelete?.let { expense ->
+        ConfirmationDialog(
+            title = "Delete transaction?",
+            message = "Remove ${expense.title} from your transactions?",
+            confirmText = "Delete",
+            dismissText = "Cancel",
+            onDismiss = { viewModel.requestDelete(null) },
+            onConfirm = viewModel::deleteExpense,
+        )
+    }
+}
+
+@Composable
+private fun TransactionHistory(
+    state: TransectionsUiState,
+    onTypeSelect: (String?) -> Unit,
+    onMonthSelect: (YearMonth?) -> Unit,
+    onUpdate: (Expense) -> Unit,
+    onDelete: (Expense) -> Unit,
+    initiallyShowInsights: Boolean = true,
+) {
+    var showInsights by rememberSaveable { mutableStateOf(initiallyShowInsights) }
+    val byDay = remember(state.transactions) {
+        state.transactions.groupBy { it.date.asTransactionDate()?.toString() ?: it.date }
+    }
+
+    Box(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
+        LazyColumn(
+            modifier = Modifier.widthIn(max = 590.dp).fillMaxSize(),
+            contentPadding = PaddingValues(start = 22.dp, end = 22.dp, top = 12.dp, bottom = 16.dp),
         ) {
-            // Modern Segmented Tab Bar
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = AppSpacing.Layout.screenPadding,
-                        vertical = AppSpacing.Size.md
-                    ),
-                shape = RoundedCornerShape(AppSpacing.Size.md),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            ) {
+            item {
                 Row(
-                    modifier = Modifier.padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    tabs.forEachIndexed { index, tab ->
-                        val isSelected = selectedTab == index
-                        val backgroundColor by animateColorAsState(
-                            targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                            animationSpec = tween(durationMillis = 300),
-                            label = "tabBackground"
+                    MonthFilter(state.month, state.months, onMonthSelect, Modifier.weight(1f, fill = false))
+                    TextButton(onClick = { showInsights = !showInsights }, enabled = state.transactions.isNotEmpty()) {
+                        Icon(Icons.Default.BarChart, null, Modifier.size(18.dp))
+                        Text("Insights", Modifier.padding(horizontal = 5.dp))
+                        Icon(
+                            if (showInsights) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (showInsights) "Collapse" else "Expand",
+                            modifier = Modifier.size(16.dp),
                         )
-                        val contentColor by animateColorAsState(
-                            targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            label = "tabContent"
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(AppSpacing.Size.sm))
-                                .background(backgroundColor)
-                                .onSingleClick { selectedTab = index },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = tab.icon,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = contentColor
-                                )
-                                Spacer(Modifier.width(AppSpacing.Size.sm))
-                                Text(
-                                    text = tab.title,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = contentColor,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-                }
-
-            }
-            FinalExpenseGraphCard(
-                expenses = state.incomeExpenseList,
-                isIncome = selectedTab == 0,
-                onSelectedMonth = {
-                    Log.d(TAG, "TransectionsScreen: $it")
-                    viewModel.updateUiState(state.copy(selectedMonth = it))
-                }
-            )
-
-            // Screen Content
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = AppSpacing.Layout.screenPadding)
-            ) {
-                if (startAnimation) {
-                    AnimatedContent(
-                        targetState = selectedTab,
-                        transitionSpec = {
-                            if (targetState > initialState) {
-                                (slideInHorizontally { it } + fadeIn(tween(600)))
-                                    .togetherWith(slideOutHorizontally { -it } + fadeOut(tween(600)))
-                            } else {
-                                (slideInHorizontally { -it } + fadeIn(tween(600)))
-                                    .togetherWith(slideOutHorizontally { it } + fadeOut(tween(600)))
-                            }
-                        },
-                        label = "tabTransition"
-                    ) { _ ->
-                        if (state.incomeExpenseList.isNotEmpty()) {
-                            TransactionList(
-                                list = state.incomeExpenseList,
-                                onDelete = {
-                                    viewModel.updateUiState(
-                                        state.copy(
-                                            showExpenseDeleteDialog = true,
-                                            deleteExpenseItem = it
-                                        )
-                                    )
-                                },
-                                onItemClick = { onUpdate(it) }
-                            )
-                        }
                     }
                 }
             }
-        }
-        if (state.showExpenseDeleteDialog) {
-            ConfirmationDialog(
-                title = "Warning !",
-                message = "Are You Sure Want to Delete This Item ?",
-                confirmText = "OK",
-                dismissText = "Cancel",
-                onDismiss = {
-                    viewModel.updateUiState(
-                        state.copy(
-                            showExpenseDeleteDialog = false,
-                            deleteExpenseItem = null
+            item {
+                Box(Modifier.padding(top = 12.dp, bottom = 8.dp)) {
+                    TransactionFilters(listOf("All", "Expense", "Income"), state.type ?: "All") {
+                        onTypeSelect(it.takeUnless { option -> option == "All" })
+                    }
+                }
+            }
+            if (showInsights && state.transactions.isNotEmpty()) {
+                item { HistoryInsights(state) }
+            }
+            if (byDay.isEmpty()) {
+                item {
+                    Column(
+                        Modifier.fillMaxWidth().padding(top = 64.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ReceiptLong,
+                            null,
+                            Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.primary,
                         )
+                        Text("No transactions", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            "Choose another month or filter.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+            }
+            for ((day, expenses) in byDay) {
+                item(key = "date:$day") {
+                    Text(
+                        dateHeading(day),
+                        Modifier.padding(top = 18.dp, bottom = 4.dp),
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                },
-                onConfirm = {
-                    if (state.deleteExpenseItem != null) {
-                        viewModel.deleteExpense()
-                    }
-                    viewModel.updateUiState(state.copy(showExpenseDeleteDialog = false))
                 }
-            )
+                items(expenses, key = { requireNotNull(it.id) }) { expense ->
+                    Box(Modifier.padding(top = 7.dp).semantics {
+                        customActions = listOf(CustomAccessibilityAction("Delete transaction") {
+                            onDelete(expense)
+                            true
+                        })
+                    }) {
+                        SwipeToDeleteContainer(item = expense, onDelete = onDelete) {
+                            TransactionItem(it, onClick = onUpdate, showDate = false)
+                        }
+                    }
+                }
+            }
         }
-        if (state.isLoading) {
-            AnimatedProgressDialog()
+    }
+}
+
+private fun dateHeading(day: String): String {
+    val date = day.asTransactionDate() ?: return day
+    val today = LocalDate.now()
+    return when (date) {
+        today -> "Today"
+        today.minusDays(1) -> "Yesterday"
+        else -> date.format(DateTimeFormatter.ofPattern("EEE, d MMM uuuu"))
+    }
+}
+
+@Composable
+private fun MonthFilter(
+    selectedMonth: YearMonth?,
+    months: List<YearMonth>,
+    onSelect: (YearMonth?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val formatter = DateTimeFormatter.ofPattern("MMM uuuu")
+    val colors = MaterialTheme.colorScheme
+    Box(modifier) {
+        Surface(
+            onClick = { expanded = true },
+            shape = RoundedCornerShape(16.dp),
+            color = colors.surfaceContainerLow,
+        ) {
+            Row(
+                Modifier.heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Default.CalendarMonth, null, Modifier.size(18.dp), tint = colors.primary)
+                Text(selectedMonth?.format(formatter) ?: "All time", style = MaterialTheme.typography.labelLarge)
+                Icon(Icons.Default.KeyboardArrowDown, null, Modifier.size(17.dp))
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(text = { Text("All time") }, onClick = {
+                onSelect(null)
+                expanded = false
+            })
+            for (month in months) {
+                DropdownMenuItem(text = { Text(month.format(formatter)) }, onClick = {
+                    onSelect(month)
+                    expanded = false
+                })
+            }
         }
     }
 }
 
 @Composable
-fun FinalExpenseGraphCard(
-    expenses: List<Expense>,
-    isIncome: Boolean,
-    onSelectedMonth: (String) -> Unit,
-) {
-    val monthMap = mapOf(
-        "Jan" to "January", "Feb" to "February", "Mar" to "March", "Apr" to "April",
-        "May" to "May", "Jun" to "June", "Jul" to "July", "Aug" to "August",
-        "Sep" to "September", "Oct" to "October", "Nov" to "November", "Dec" to "December"
-    )
-
-    val availableMonths = remember {
-        val monthFormat = SimpleDateFormat("MMMM", Locale.ENGLISH)
-        (0..11).map { i ->
-            val cal = Calendar.getInstance()
-            cal.set(Calendar.MONTH, i)
-            monthFormat.format(cal.time)
-        }
-    }
-
-    val initialMonth = remember(availableMonths) {
-        val calendar = Calendar.getInstance()
-        val monthFormat = SimpleDateFormat("MMMM", Locale.ENGLISH)
-        val currentMonth = monthFormat.format(calendar.time)
-
-        calendar.add(Calendar.MONTH, -1)
-        val previousMonth = monthFormat.format(calendar.time)
-
-        when {
-            availableMonths.contains(currentMonth) -> currentMonth
-            availableMonths.contains(previousMonth) -> previousMonth
-            else -> availableMonths.firstOrNull() ?: currentMonth
-        }
-    }
-
-    var selectedMonth by remember { mutableStateOf("") }
-
-    LaunchedEffect(initialMonth) {
-        selectedMonth = initialMonth
-    }
-    LaunchedEffect(selectedMonth) {
-        val shortMonth = monthMap.entries.firstOrNull { it.value == selectedMonth }?.key ?: selectedMonth
-        onSelectedMonth(shortMonth)
-    }
-
-    var expanded by remember { mutableStateOf(false) }
-
-    val graphData = remember(selectedMonth, expenses) {
-        if (selectedMonth.isEmpty()) return@remember emptyList()
-        expenses.asSequence().filter {
-            val part = it.date.split("-").getOrNull(1) ?: ""
-            val fullName = monthMap[part] ?: part
-            fullName == selectedMonth
-        }
-            .groupBy { it.date.split("-").getOrNull(0) ?: "" }
-            .map { (day, list) ->
-                BarChartData(day, list.sumOf { it.amount }.toFloat())
-            }
-            .sortedBy { it.label.toIntOrNull() ?: 0 }
-            .toList()
-    }
-
-    if (graphData.isEmpty() && selectedMonth.isNotEmpty()) {
-        // We handle this inside the Card UI below
-    }
-
-    val totalAmount = remember(graphData) {
-        graphData.sumOf { it.value.toDouble() }
-    }
-
-    val dateRangeText = remember(selectedMonth, expenses) {
-        val filtered = expenses.filter {
-            val part = it.date.split("-").getOrNull(1) ?: ""
-            val fullName = monthMap[part] ?: part
-            fullName == selectedMonth
-        }
-        if (filtered.isEmpty()) "No transactions in $selectedMonth"
-        else {
-            val sorted = filtered.sortedBy { it.date }
-            "${sorted.first().date} - ${sorted.last().date}"
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+private fun HistoryInsights(state: TransectionsUiState) {
+    var showTimeline by rememberSaveable { mutableStateOf(false) }
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(24.dp),
     ) {
-        if (availableMonths.isNotEmpty()) {
-            Box {
-                Row(
-                    modifier = Modifier
-                        .clickable { expanded = true }
-                        .background(
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Select Month: $selectedMonth",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    )
-                    Icon(
-                        Icons.Default.ArrowDropDown,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    availableMonths.forEach { month ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = month,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                            },
-                            onClick = {
-                                selectedMonth = month
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(4.dp))
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            TransactionFilters(
+                options = listOf("Categories", "Timeline"),
+                selected = if (showTimeline) "Timeline" else "Categories",
+                onSelect = { showTimeline = it == "Timeline" },
+            )
+            if (showTimeline) CashFlowTimeline(state) else CategoryReport(state)
         }
+    }
+}
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+@Composable
+private fun CashFlowTimeline(state: TransectionsUiState) {
+    val monthly = state.month == null
+    val periods = remember(state.transactions, monthly) {
+        val labels = DateTimeFormatter.ofPattern(if (monthly) "MMM yy" else "d")
+        val dates = DateTimeFormatter.ofPattern(if (monthly) "MMMM uuuu" else "d MMM uuuu")
+        state.transactions.mapNotNull { expense ->
+            val date = expense.date.asTransactionDate() ?: return@mapNotNull null
+            (if (monthly) date.withDayOfMonth(1) else date) to expense
+        }.groupBy({ it.first }, { it.second }).toSortedMap().map { (date, entries) ->
+            CashFlowPeriod(
+                label = date.format(labels),
+                description = date.format(dates),
+                income = entries.filter { it.type == "Income" }.sumOf { it.amount.toLong() },
+                expense = entries.filter { it.type == "Expense" }.sumOf { it.amount.toLong() },
+            )
+        }
+    }
+    Text(
+        if (monthly) "Monthly cash flow" else "Daily cash flow",
+        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+    )
+    if (periods.isEmpty()) {
+        Text(
+            "No dated transactions to chart.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    } else {
+        BarChart(
+            periods,
+            showIncome = state.type != "Expense",
+            showExpense = state.type != "Income",
+        )
+    }
+}
+
+private data class ReportCategory(val name: String, val amount: Long)
+
+private val reportColors = listOf(
+    Color(0xFF7957D5),
+    Color(0xFF2789AA),
+    Color(0xFFDD9261),
+    Color(0xFF39A185),
+    Color(0xFFCB719E),
+    Color(0xFF8093C8),
+)
+
+@Composable
+private fun CategoryReport(state: TransectionsUiState) {
+    val categories = remember(state.transactions) {
+        val ranked = state.transactions.filter { it.amount > 0 }.groupBy {
+            it.category.trim().ifBlank { "Uncategorized" }.lowercase(Locale.ROOT)
+        }.values.map { rows ->
+            ReportCategory(rows.first().category.trim().ifBlank { "Uncategorized" }, rows.sumOf { it.amount.toLong() })
+        }.sortedWith(compareByDescending<ReportCategory> { it.amount }.thenBy { it.name })
+        if (ranked.size <= reportColors.size) ranked
+        else ranked.take(reportColors.size - 1) +
+            ReportCategory("Other categories", ranked.drop(reportColors.size - 1).sumOf { it.amount })
+    }
+    val total = categories.sumOf { it.amount }
+    if (total == 0L) {
+        Text("No amounts to chart.", style = MaterialTheme.typography.bodyMedium)
+        return
+    }
+    val colors = MaterialTheme.colorScheme
+    val caption = when (state.type) {
+        "Income" -> "Total income"
+        "Expense" -> "Total expenses"
+        else -> "Income + expenses"
+    }
+    val percent = remember { NumberFormat.getPercentInstance() }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Box(
+            Modifier.align(Alignment.CenterHorizontally).size(216.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (graphData.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No transactions found for $selectedMonth",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                        )
-                    }
-                } else {
-                    Text(
-                        text = dateRangeText,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.bodyMedium
+            Canvas(Modifier.matchParentSize()) {
+                val strokeWidth = 18.dp.toPx()
+                val inset = strokeWidth / 2
+                var angle = -90f
+                categories.forEachIndexed { index, category ->
+                    val sweep = (category.amount.toDouble() / total * 360).toFloat()
+                    val gap = if (categories.size == 1) 0f else minOf(5f, sweep / 4)
+                    drawArc(
+                        color = reportColors[index],
+                        startAngle = angle + gap / 2,
+                        sweepAngle = sweep - gap,
+                        useCenter = false,
+                        topLeft = Offset(inset, inset),
+                        size = Size(size.width - strokeWidth, size.height - strokeWidth),
+                        style = Stroke(strokeWidth),
                     )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "৳ ${
-                            String.format(
-                                LocalLocale.current.platformLocale,
-                                "%.2f",
-                                totalAmount
-                            )
-                        }",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    BarChart(
-                        data = graphData,
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.secondary,
-                            MaterialTheme.colorScheme.tertiary
-                        ),
-                        isIncome = isIncome,
-                        currencySymbol = "৳",
-                        showYAxis = true,
-                        showPercentBarTop = false,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    )
+                    angle += sweep
                 }
             }
+            Column(
+                Modifier.fillMaxWidth(0.70f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(caption, style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant,
+                    textAlign = TextAlign.Center)
+                Text(
+                    total.asTaka(),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 26.sp),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+            }
         }
+        categories.forEachIndexed { index, category ->
+            val share = category.amount.toDouble() / total
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(9.dp).background(reportColors[index], CircleShape))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(category.name, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        Text(category.amount.asTaka(), style = MaterialTheme.typography.labelLarge)
+                    }
+                    LinearProgressIndicator(
+                        progress = { share.toFloat() },
+                        modifier = Modifier.fillMaxWidth().height(4.dp),
+                        color = reportColors[index],
+                        trackColor = colors.surfaceContainer,
+                        gapSize = 0.dp,
+                        drawStopIndicator = {},
+                    )
+                }
+                Text(percent.format(share), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Preview(name = "Transactions and Insights", widthDp = 393, heightDp = 790)
+@Composable
+private fun TransactionHistoryPreview() {
+    ExpenseTrackerTheme(darkTheme = false, dynamicColor = false) {
+        val items = listOf(
+            Expense(id = 1, title = "Groceries", amount = 2350, date = "2026-11-25", type = "Expense", category = "Food", isSynced = true),
+            Expense(id = 2, title = "Freelance payment", amount = 5400, date = "2026-11-25", type = "Income", category = "Salary", isSynced = true),
+            Expense(id = 3, title = "Metro pass", amount = 1600, date = "2026-11-24", type = "Expense", category = "Transport", isSynced = true),
+            Expense(id = 4, title = "Groceries", amount = 3000, date = "2026-11-23", type = "Expense", category = "Food", isSynced = true),
+            Expense(id = 5, title = "Freelance payment", amount = 4250, date = "2026-11-22", type = "Income", category = "Salary", isSynced = true),
+            Expense(id = 6, title = "Books", amount = 1900, date = "2026-11-22", type = "Expense", category = "Shopping", isSynced = true),
+        )
+        TransactionHistory(
+            TransectionsUiState(month = YearMonth.of(2026, 11), transactions = items),
+            onTypeSelect = {},
+            onMonthSelect = {},
+            onUpdate = {},
+            onDelete = {},
+            initiallyShowInsights = true,
+        )
     }
 }

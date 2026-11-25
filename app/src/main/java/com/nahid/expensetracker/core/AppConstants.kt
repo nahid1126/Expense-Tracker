@@ -8,7 +8,7 @@ object AppConstants {
     const val ENABLE_LOG = DEV_MODE
     const val AUTO_LOGIN = DEV_MODE
 
-    const val DATABASE_VERSION: Int = 1
+    const val DATABASE_VERSION: Int = 2
     const val DB_NAME: String = "Expanse_Database"
     const val PREF_NAME: String = "Expanse Tracker"
     const val APP_MARGIN: Int = 8

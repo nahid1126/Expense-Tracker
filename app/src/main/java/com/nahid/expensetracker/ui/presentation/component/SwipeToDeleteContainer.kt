@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -39,7 +40,7 @@ fun <T> SwipeToDeleteContainer(
         state = state,
         backgroundContent = {
             val color = when (state.dismissDirection) {
-                SwipeToDismissBoxValue.EndToStart -> Color.Red.copy(alpha = 0.8f)
+                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
                 else -> Color.Transparent
             }
             Box(
@@ -51,8 +52,8 @@ fun <T> SwipeToDeleteContainer(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = Color.White
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
         },

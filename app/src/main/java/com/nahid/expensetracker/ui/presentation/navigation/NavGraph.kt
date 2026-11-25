@@ -105,9 +105,7 @@ private fun NavGraphBuilder.homeGraph(
     }) {
         if (gmail != null) {
             HomeScreen(
-                user = gmail,
                 onChangeConfiguration = onChangeConfiguration,
-                onShowMessage = onShowMessage,
                 toExit = { onExit() },
                 onSeeAllClicked = {
                     navController.navigate(Destinations.Transections)

@@ -7,7 +7,7 @@ A **modern, offline-first personal finance manager** built to showcase professio
 ## ✨ Features
 
 - 📊 **Expense Tracking:** Effortlessly log and categorize income and expenses to monitor your financial health.
-- 📶 **Offline-First Architecture:** Full functionality without an internet connection, powered by a local Room database.
+- 📶 **Offline Transactions:** After signing in, add, edit, and delete transactions without an internet connection. Room keeps changes pending until they sync.
 - 🔄 **Cloud Synchronization:** Seamless background data sync with Firebase Firestore using **WorkManager**.
 - 🔒 **Secure Authentication:** Integrated **Google Sign-In** using the modern Credential Manager API.
 - 🌓 **Dynamic Theming:** Beautiful UI with support for Dark and Light modes.
@@ -15,6 +15,14 @@ A **modern, offline-first personal finance manager** built to showcase professio
 - 🎨 **Modern UI:** Built entirely with **Jetpack Compose** and **Material 3** for a sleek, responsive experience.
 
 ---
+
+## Release builds
+
+Set `EXPENSE_RELEASE_STORE_FILE`, `EXPENSE_RELEASE_STORE_PASSWORD`, `EXPENSE_RELEASE_KEY_ALIAS`, and `EXPENSE_RELEASE_KEY_PASSWORD` in your local environment or CI secret store. Use an absolute keystore path outside the checkout. A release build without these variables produces an unsigned artifact.
+
+## Existing data
+
+The Room migration preserves version 1 rows. Since those rows did not record account ownership, they are excluded from account views and background uploads. Previously synced transactions come back from the signed-in account's cloud history. Unsynced version 1 rows remain in the local database for deliberate recovery.
 
 ## 🛠 Tech Stack
 

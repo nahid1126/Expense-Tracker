@@ -60,10 +60,7 @@ class LoginViewModel(
                         if (result.data != null) {
                             appPreference.saveUserId(result.data.uid)
                             appPreference.saveUserGmail(result.data.email)
-                            Log.d(
-                                TAG,
-                                "googleLogin: ${result.data.email} ${result.data.providerId}, ${result.data.uid}"
-                            )
+
                         }
                         updateUiState(
                             uiState.value.copy(

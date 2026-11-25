@@ -1,156 +1,192 @@
 package com.nahid.expensetracker.ui.presentation.component
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
+import com.nahid.expensetracker.core.AppSpacing
 import com.nahid.expensetracker.ui.presentation.navigation.Destinations
-import com.nahid.expensetracker.ui.theme.Gray
+import com.nahid.expensetracker.ui.theme.ExpenseTrackerTheme
 
 @Composable
 fun CustomBottomNavigationBar(
     currentDestination: NavDestination?,
     onItemClick: (Destinations) -> Unit,
-    onFabClick: () -> Unit
+    onFabClick: () -> Unit,
 ) {
-    val activeColor = Color(0xFF2B5748)
-    val inactiveColor = Gray // Grayish like in image
+    val selected = when {
+        currentDestination?.hasRoute(Destinations.Home::class) == true -> Destinations.Home
+        currentDestination?.hasRoute(Destinations.Transections::class) == true -> Destinations.Transections
+        else -> null
+    }
+    NavigationDock(selected, onItemClick, onFabClick)
+}
 
-    val leftItem = BottomNavItem(Destinations.Home, Icons.Default.Home, "Home")
-
-    val rightItem = BottomNavItem(Destinations.Transections, Icons.Default.BarChart, "Transactions")
-
-
+@Composable
+private fun NavigationDock(
+    selected: Destinations?,
+    onItemClick: (Destinations) -> Unit,
+    onAdd: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
     Box(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
-            .height(100.dp)
-            .background(Color.Transparent)
+            .padding(horizontal = AppSpacing.Layout.screenPadding, vertical = AppSpacing.Size.md)
+            .background(colors.background),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        // Main Bar with Shadow
-        Box(
+        Surface(
             modifier = Modifier
-                .fillMaxWidth(.6f)
-                .height(70.dp)
-                .align(Alignment.BottomCenter)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = BottomNavCutoutShape(),
-                    clip = false
-                )
-                .clip(BottomNavCutoutShape())
-                .background(Color.White)
+                .widthIn(max = 280.dp)
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            shape = BottomNavCutoutShape(),
+            color = colors.surfaceContainerLow,
+            border = BorderStroke(1.dp, colors.outlineVariant),
+            shadowElevation = 3.dp,
         ) {
             Row(
-                modifier = Modifier
+                Modifier
                     .fillMaxWidth()
-                    .height(70.dp)
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .navigationBarsPadding()
+                    .padding(horizontal = 0.dp, vertical = 0.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Left Items
-                Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    NavBarIcon(
-                        item = leftItem,
-                        isSelected = currentDestination?.hasRoute(leftItem.destination::class) == true,
-                        activeColor = activeColor,
-                        inactiveColor = inactiveColor,
-                        onClick = { onItemClick(leftItem.destination) }
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(70.dp))
-
-                // Right Items
-                Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    NavBarIcon(
-                        item = rightItem,
-                        isSelected = currentDestination?.hasRoute(rightItem.destination::class) == true,
-                        activeColor = activeColor,
-                        inactiveColor = inactiveColor,
-                        onClick = { onItemClick(rightItem.destination) }
-                    )
-                }
+                NavBarItem(
+                    label = "Home",
+                    icon = Icons.Default.Home,
+                    selected = selected == Destinations.Home,
+                    onClick = { onItemClick(Destinations.Home) },
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(58.dp))
+                NavBarItem(
+                    label = "Transactions",
+                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
+                    selected = selected == Destinations.Transections,
+                    onClick = { onItemClick(Destinations.Transections) },
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
-
-        // Floating Action Button
-        FloatingActionButton(
-            onClick = onFabClick,
-            shape = CircleShape,
-            containerColor = activeColor,
-            contentColor = Color.White,
-            elevation = FloatingActionButtonDefaults.elevation(4.dp, 4.dp),
-            modifier = Modifier
-                .size(50.dp)
-                .align(Alignment.TopCenter)
-                .offset(y = 8.dp)
+        Surface(
+            onClick = onAdd,
+            color = Color.Transparent,
+            shape = RoundedCornerShape(25.dp),
         ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add",
-                modifier = Modifier.size(32.dp)
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = colors.primary,
+                    contentColor = colors.onPrimary,
+                    border = BorderStroke(2.dp, colors.surfaceContainerLow),
+                    shadowElevation = 4.dp,
+                ) {
+                    Box(Modifier.size(50.dp), contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+                Text(
+                    "Add", color = colors.primary, style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun NavBarIcon(
-    item: BottomNavItem,
-    isSelected: Boolean,
-    activeColor: Color,
-    inactiveColor: Color,
-    onClick: () -> Unit
+private fun NavBarItem(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = Modifier
-            .size(44.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+    val colors = MaterialTheme.colorScheme
+    val indicator by animateColorAsState(
+        if (selected) colors.primaryContainer else Color.Transparent,
+        label = "Tab background",
+    )
+    val foreground by animateColorAsState(
+        if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant,
+        label = "Tab foreground",
+    )
+    Column(
+        modifier
+            .clip(RoundedCornerShape(21.dp))
+            .selectable(selected = selected, role = Role.Tab, onClick = onClick)
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 4.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
     ) {
-        // In the image, there is a subtle background for active icon sometimes, 
-        // but here we just use color for simplicity or add a small indicator.
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.contentDescription,
-            tint = if (isSelected) activeColor else inactiveColor,
-            modifier = Modifier.size(28.dp)
+        Box(
+            Modifier
+                .width(52.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, null, Modifier.size(24.dp), tint = foreground)
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = foreground,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            textAlign = TextAlign.Center,
         )
     }
 }
 
-private data class BottomNavItem(
-    val destination: Destinations,
-    val icon: ImageVector,
-    val contentDescription: String
-)
+@Preview(name = "Navigation dock", widthDp = 393)
+@Composable
+private fun NavigationDockPreview() {
+    ExpenseTrackerTheme(darkTheme = false, dynamicColor = false) {
+        NavigationDock(Destinations.Transections, onItemClick = {}, onAdd = {})
+    }
+}

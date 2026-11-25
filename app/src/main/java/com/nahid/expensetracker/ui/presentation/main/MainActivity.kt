@@ -12,19 +12,14 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.WavingHand
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -39,40 +34,38 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavDestination.Companion.hasRoute
-import com.nahid.expensetracker.core.AppConstants
-import com.nahid.expensetracker.core.AppSpacing
 import com.nahid.expensetracker.ui.presentation.component.AnimatedProgressDialog
 import com.nahid.expensetracker.ui.presentation.component.ConfirmationDialog
 import com.nahid.expensetracker.ui.presentation.component.CustomBottomNavigationBar
 import com.nahid.expensetracker.ui.presentation.navigation.Destinations
 import com.nahid.expensetracker.ui.presentation.navigation.NavGraph
 import com.nahid.expensetracker.ui.theme.ExpenseTrackerTheme
-import com.nahid.expensetracker.ui.theme.Purple40
-import com.nahid.expensetracker.ui.theme.Typography
+import java.time.LocalTime
 import org.koin.compose.viewmodel.koinViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (android.os.Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
         setContent {
             val viewModel: MainViewModel = koinViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
-            ExpenseTrackerTheme(darkTheme = state.isDarkMode, dynamicColor = false) {
+            ExpenseTrackerTheme(dynamicColor = false) {
                 App(viewModel, state)
             }
         }
@@ -90,17 +83,9 @@ fun App(
     val context = LocalContext.current
     val snackBarHostState = remember { SnackbarHostState() }
     val gmail = uiState.gmail
+    var localHour by remember { mutableIntStateOf(LocalTime.now().hour) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { localHour = LocalTime.now().hour }
 
-    val greeting = remember {
-        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        when (hour) {
-            in 0..11 -> "Good Morning,"
-            in 12..15 -> "Good Afternoon,"
-            in 16..20 -> "Good Evening,"
-            else -> "Good Night,"
-        }
-    }
-    var expanded by remember { mutableStateOf(false) }
     LaunchedEffect(uiState.loggedOut) {
         if (uiState.loggedOut) {
             navController.navigate(Destinations.LoginScreen){
@@ -125,8 +110,9 @@ fun App(
     }
     if (uiState.showLogoutDialog) {
         ConfirmationDialog(
-            title = "Logout",
-            message = "Are You Sure Want to Logout ?",
+            title = "Sign out?",
+            message = gmail?.let { "Sign out of $it?" } ?: "Sign out of Expense Tracker?",
+            confirmText = "Sign out",
             onDismiss = {
                 viewModel.updateUiState(uiState.copy(showLogoutDialog = false))
             },
@@ -137,6 +123,7 @@ fun App(
         )
     }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
             SnackbarHost(snackBarHostState)
         },
@@ -154,166 +141,42 @@ fun App(
             }
         },
         topBar = {
-            if (uiState.uiConfig.showTopBar) {
+            val config = uiState.uiConfig
+            if (config.showTopBar) {
                 TopAppBar(
                     title = {
-                        val title = uiState.uiConfig.title
-                        //val dateTitle = uiState.uiConfig.dateTitle.ifEmpty { System.currentTimeMillis().toFormat("MMM dd, yyyy") }
-                        val subTitle = uiState.uiConfig.subTitle
                         Column {
-                            if (title.contains("Home")) {
-                                Text(
-                                    greeting,
-                                    style = Typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
+                            Text(
+                                if (config.title == "Home") homeGreeting(localHour) else config.title,
+                                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            if (config.showSubTitle && config.subTitle.isNotBlank()) {
+                                Text(config.subTitle, style = MaterialTheme.typography.bodySmall)
                             }
-
-                            if (title.contains("Home")) {
-                                Spacer(modifier = Modifier.size(AppSpacing.Size.md))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        gmail ?: "test@gmail.com",
-                                        style = Typography.titleLarge.copy(
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        modifier = Modifier.padding(end = AppSpacing.Size.sm),
-                                    )
-                                    Icon(
-                                        Icons.Default.WavingHand,
-                                        contentDescription = null,
-                                        tint = Purple40
-                                    )
-                                }
-                            } else {
-                                Spacer(modifier = Modifier.size(AppSpacing.Size.md))
-                                Text(
-                                    title,
-                                    style = Typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                            }
-
-
-                            if (uiState.uiConfig.showSubTitle) {
-                                Spacer(modifier = Modifier.size(AppSpacing.Size.sm))
-                                Text(
-                                    subTitle,
-                                    style = Typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                            }
-
-                            /*if (uiState.uiConfig.showDateTitle) {
-                                Spacer(modifier = Modifier.size(AppSpacing.Size.sm))
-                                Text(
-                                    dateTitle,
-                                    style = Typography.titleMedium.copy(),
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                            }*/
-
-                            //Spacer(modifier = Modifier.size(AppSpacing.Size.md))
-
                         }
-
-
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
                     ),
                     actions = {
-                        if (uiState.uiConfig.showOptionMenu) {
-                            IconButton(onClick = {
-                                viewModel.updateUiState(
-                                    uiState.copy(
-                                        showLogoutDialog = true
-                                    )
-                                )
-                            }) {
-                                Icon(
-                                    Icons.Default.Logout,
-                                    contentDescription = null,
-                                    tint = White
-                                )
+                        if (config.showOptionMenu) {
+                            IconButton(onClick = { viewModel.updateUiState(uiState.copy(showLogoutDialog = true)) }) {
+                                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
                             }
-                        }
-                        /* if (uiState.uiConfig.showOptionMenu) {
-                             Row {
-
-                                 *//*Box {
-                                    DropdownMenu(
-                                        expanded = expanded,
-                                        onDismissRequest = { expanded = false }
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text("About") },
-                                            leadingIcon = {
-                                                Icon(
-                                                    Icons.Outlined.Info,
-                                                    contentDescription = null
-                                                )
-                                            },
-                                            onClick = {
-                                                expanded = !expanded
-                                                navController.navigate(Destinations.AboutApp)
-                                            }
-                                        )
-                                        DropdownMenuItem(
-                                            text = { Text("Logout") },
-                                            leadingIcon = {
-                                                Icon(
-                                                    Icons.Outlined.Logout,
-                                                    contentDescription = null
-                                                )
-                                            },
-                                            onClick = {
-                                                expanded = !expanded
-                                                viewModel.updateUiState(
-                                                    uiState.copy(
-                                                        showLogoutDialog = true
-                                                    )
-                                                )
-                                            }
-                                        )
-                                    }
-                                }*//*
-                            }
-                        } else {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-
-                            }
-
-                        }*/
-                    }, navigationIcon = {
-                        if (uiState.uiConfig.showNavigation) {
-                            IconButton(
-                                onClick = {
-                                    navController.popBackStack()
-                                }, modifier = Modifier
-                                    .padding(
-                                        end = (AppConstants.APP_MARGIN / 2).dp
-                                    )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-
-
                         }
                     },
-modifier = Modifier.background(MaterialTheme.colorScheme.primary)
+                    navigationIcon = {
+                        if (config.showNavigation) {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            }
+                        }
+                    },
                 )
             }
-
         },
         bottomBar = {
             val showBottomBar = currentBackStack?.destination?.let { dest ->
@@ -348,7 +211,7 @@ modifier = Modifier.background(MaterialTheme.colorScheme.primary)
         },
     ) { innerPadding ->
 
-        Box(Modifier.padding(innerPadding)) {
+        Box(Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)) {
             NavGraph(
                 navController = navController,
                 gmail = gmail,
@@ -370,4 +233,12 @@ modifier = Modifier.background(MaterialTheme.colorScheme.primary)
 
     }
 
+}
+
+
+private fun homeGreeting(hour: Int): String = when (hour) {
+    in 5..11 -> "Good morning"
+    in 12..16 -> "Good afternoon"
+    in 17..21 -> "Good evening"
+    else -> "Welcome back"
 }

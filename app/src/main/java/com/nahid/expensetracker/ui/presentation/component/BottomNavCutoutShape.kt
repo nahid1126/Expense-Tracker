@@ -6,10 +6,12 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 class BottomNavCutoutShape(
-    private val cornerRadius: Float = 40f,
-    private val notchRadius: Float = 45f,
+    private val cornerRadius: Dp = 24.dp,
+    private val notchRadius: Dp = 23.dp,
 ) : Shape {
 
     override fun createOutline(
@@ -18,8 +20,11 @@ class BottomNavCutoutShape(
         density: Density,
     ): Outline {
         val centerX = size.width / 2f
+        val cornerRadius = with(density) { cornerRadius.toPx() }.coerceAtMost(minOf(centerX, size.height / 2f))
+        val notchRadius = with(density) { notchRadius.toPx() }
+            .coerceAtMost((centerX - cornerRadius) / 2.3f)
         val notchWidth = notchRadius * 2.3f
-        val notchDepth = notchRadius * 1.7f
+        val notchDepth = (notchRadius * 1.7f).coerceAtMost(size.height * 0.8f)
 
         val path = Path().apply {
 
@@ -60,7 +65,7 @@ class BottomNavCutoutShape(
 
             cubicTo(
                 centerX - notchWidth * 0.70f,
-                4f,
+                0f,
                 centerX - notchRadius * 1.2f,
                 notchDepth,
                 centerX,
@@ -71,7 +76,7 @@ class BottomNavCutoutShape(
                 centerX + notchRadius * 1.2f,
                 notchDepth,
                 centerX + notchWidth * 0.70f,
-                4f,
+                0f,
                 centerX + notchWidth,
                 0f
             )

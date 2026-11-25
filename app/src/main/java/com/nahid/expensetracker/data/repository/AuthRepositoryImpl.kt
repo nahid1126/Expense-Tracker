@@ -1,7 +1,6 @@
 package com.nahid.expensetracker.data.repository
 
 import android.util.Log
-import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -22,9 +21,7 @@ class AuthRepositoryImpl(
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val result = auth.signInWithCredential(credential).await()
-            Log.d(TAG, "signInWithGoogle: $credential, $result")
             if (result.user != null) {
-                Log.d(TAG, "signInWithGoogle: ${result.user!!.uid}")
                 Results.Success(result.user)
             } else {
                 Results.Error(AppException.AuthException())
@@ -45,8 +42,8 @@ class AuthRepositoryImpl(
     override suspend fun logout(): Results<Boolean> {
 
         return try {
-            googleAuthManager.logout()
             auth.signOut()
+            googleAuthManager.logout()
             Results.Success(true)
         } catch (e: Exception) {
             Results.Error(e.getSpecificException())

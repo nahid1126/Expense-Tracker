@@ -3,13 +3,15 @@ package com.nahid.expensetracker.ui.presentation.addexpense
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nahid.expensetracker.core.Results
-import com.nahid.expensetracker.core.utils.extension.longToSimpleDateFormatString
-import com.nahid.expensetracker.core.utils.extension.toDateMillis
 import com.nahid.expensetracker.domain.model.Expense
+import com.nahid.expensetracker.domain.model.validTransactionAmount
+import com.nahid.expensetracker.domain.model.transactionDateFromPicker
 import com.nahid.expensetracker.domain.model.ExpenseCategory
 import com.nahid.expensetracker.domain.model.ExpenseType
 import com.nahid.expensetracker.domain.repository.ExpenseRepository
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
+import java.time.LocalDate
+import com.nahid.expensetracker.domain.model.toPickerMillis
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +34,8 @@ class AddExpenseViewModel(
     val uiEvent: SharedFlow<AddExpenseUiEvent> = mutableUiEvent.asSharedFlow()
 
 
-    fun updateUiState(uiState: AddExpenseUiState) {
-        mutableUiState.value = uiState
+    fun updateUiState(transform: (AddExpenseUiState) -> AddExpenseUiState) {
+        mutableUiState.update(transform)
     }
 
     fun showMessage(isSuccess: Boolean, message: String) {
@@ -89,30 +91,32 @@ class AddExpenseViewModel(
     }
 
     fun addExpense() {
-        updateUiState(uiState.value.copy(isLoading = true))
         val mainState = uiState.value
+        if (mainState.isLoading) return
+        mutableUiState.update { it.copy(isLoading = true) }
+        val amount = mainState.amount.validTransactionAmount()
         viewModelScope.launch {
-            if (mainState.expTitle.isNullOrEmpty()) {
+            if (mainState.expTitle.isNullOrBlank()) {
                 showMessage(false, "Expense Title Required")
-                updateUiState(uiState.value.copy(isLoading = false))
+                mutableUiState.update { it.copy(isLoading = false) }
             } else if (mainState.selectedExpType.isNullOrEmpty()) {
                 showMessage(false, "Expense Type Required")
-                updateUiState(uiState.value.copy(isLoading = false))
+                mutableUiState.update { it.copy(isLoading = false) }
             } else if (mainState.selectedExpCategory.isNullOrEmpty()) {
                 showMessage(false, "Expense Category Required")
-                updateUiState(uiState.value.copy(isLoading = false))
-            } else if (mainState.amount.isEmpty() || mainState.amount.toIntOrNull() == 0) {
+                mutableUiState.update { it.copy(isLoading = false) }
+            } else if (amount == null) {
                 showMessage(false, "Expense Amount Required")
-                updateUiState(uiState.value.copy(isLoading = false))
+                mutableUiState.update { it.copy(isLoading = false) }
             } else if (mainState.selectedExpDate == 0L) {
                 showMessage(false, "Expense Date Required")
-                updateUiState(uiState.value.copy(isLoading = false))
+                mutableUiState.update { it.copy(isLoading = false) }
             } else {
                 val expense = Expense(
                     id = null,
-                    title = mainState.expTitle,
-                    amount = mainState.amount.toIntOrNull() ?: 0,
-                    date = mainState.selectedExpDate.longToSimpleDateFormatString(),
+                    title = mainState.expTitle.trim(),
+                    amount = amount,
+                    date = transactionDateFromPicker(mainState.selectedExpDate).toString(),
                     type = mainState.selectedExpType,
                     category = mainState.selectedExpCategory
                 )
@@ -120,13 +124,13 @@ class AddExpenseViewModel(
                 when (val result = expenseRepository.insertExpense(expense)) {
                     is Results.Success -> {
                         showMessage(true, "Expense added successfully")
-                        updateUiState(uiState.value.copy(isLoading = false))
+                        mutableUiState.update { it.copy(isLoading = false) }
                         mutableUiEvent.emit(AddExpenseUiEvent.NavigateBack)
                     }
 
                     is Results.Error -> {
                         showMessage(false, "Error: ${result.exception.message}")
-                        updateUiState(uiState.value.copy(isLoading = false))
+                        mutableUiState.update { it.copy(isLoading = false) }
                     }
                 }
             }
@@ -145,7 +149,7 @@ data class AddExpenseUiState(
     val expenseId: Int? = null,
     val expTitle: String? = null,
     val showExpDatePicker: Boolean = false,
-    val selectedExpDate: Long = 0L,
+    val selectedExpDate: Long = LocalDate.now().toPickerMillis(),
     val selectedExpType: String? = null,
     val selectedExpTypeId: Long = 0,
     val amount: String = "",
@@ -154,7 +158,7 @@ data class AddExpenseUiState(
     val expCategories: List<ExpenseCategory> = arrayListOf(),
     val expTypes: List<ExpenseType> = arrayListOf(),
     val uiConfig: MainUIConfig = MainUIConfig(
-        title = "Add Expense",
+        title = "Add transaction",
         showTopBar = true,
         showNavigation = true,
         showSubTitle = false

@@ -6,15 +6,22 @@ plugins {
     alias(libs.plugins.google.service)
 }
 
+val releaseStore = providers.environmentVariable("EXPENSE_RELEASE_STORE_FILE").orNull
+val releaseStorePassword = providers.environmentVariable("EXPENSE_RELEASE_STORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("EXPENSE_RELEASE_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("EXPENSE_RELEASE_KEY_PASSWORD").orNull
+val hasReleaseSigning = listOf(releaseStore, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+    .all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.nahid.expensetracker"
 
-    signingConfigs {
-        create("release") {
-            storeFile = file("keystore.jks")
-            storePassword = "N@hid@26"
-            keyAlias = "keyExpense"
-            keyPassword = "N@hid@26"
+    if (hasReleaseSigning) {
+        signingConfigs.create("release") {
+            storeFile = file(requireNotNull(releaseStore))
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
         }
     }
     compileSdk = 36
@@ -44,7 +51,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.findByName("release")
         }
         debug {
             isMinifyEnabled = false
@@ -127,7 +134,6 @@ dependencies {
     implementation(libs.bundles.koin)
     implementation(libs.bundles.dataStore)
     implementation(libs.kotlinx.datetime)
-    implementation(libs.bundles.navigation)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.androidx.work.runtime.ktx)

@@ -20,23 +20,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.nahid.expensetracker.core.AppSpacing
-import com.nahid.expensetracker.core.utils.extension.toDateOnly
+import com.nahid.expensetracker.domain.model.toPickerMillis
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomDatePickerDialog(
-    confirmText: String = "Ok",
+    initialDateMillis: Long? = null,
+    confirmText: String = "OK",
     dismissText: String = "Cancel",
     onDismiss: () -> Unit = {},
     onConfirm: (date: Long) -> Unit = {},
 ) {
 
-    val today = System.currentTimeMillis()
+    val today = LocalDate.now().toPickerMillis()
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = today,
+        initialSelectedDateMillis = initialDateMillis ?: today,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis.toDateOnly() <= today.toDateOnly()
+                return utcTimeMillis <= today
             }
         }
     )
@@ -65,7 +67,7 @@ fun CustomDatePickerDialog(
                         Text(dismissText)
                     }
                     TextButton(onClick = {
-                        onConfirm(datePickerState.selectedDateMillis ?: 0L)
+                        datePickerState.selectedDateMillis?.let(onConfirm)
                     }) {
                         Text(confirmText)
                     }

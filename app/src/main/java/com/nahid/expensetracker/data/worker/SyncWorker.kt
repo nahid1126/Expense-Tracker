@@ -10,21 +10,20 @@ import org.koin.core.component.inject
 
 class SyncWorker(
     context: Context,
-    workerParams: WorkerParameters
+    workerParams: WorkerParameters,
 ) : CoroutineWorker(context, workerParams), KoinComponent {
 
     private val repository: ExpenseRepository by inject()
 
     override suspend fun doWork(): Result {
-        return when (repository.syncUnsyncedExpenses()) {
+        val uid = inputData.getString(OWNER_UID) ?: return Result.success()
+        return when (repository.syncUnsyncedExpenses(uid)) {
             is Results.Success -> Result.success()
-            is Results.Error -> {
-                if (runAttemptCount < 3) {
-                    Result.retry()
-                } else {
-                    Result.failure()
-                }
-            }
+            is Results.Error -> Result.retry()
         }
+    }
+
+    companion object {
+        const val OWNER_UID = "ownerUid"
     }
 }

@@ -1,15 +1,17 @@
 package com.nahid.expensetracker.ui.presentation.transections
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nahid.expensetracker.core.Results
 import com.nahid.expensetracker.domain.model.Expense
+import com.nahid.expensetracker.domain.model.asTransactionDate
+import com.nahid.expensetracker.domain.model.isInMonth
+import com.nahid.expensetracker.domain.model.recentTransactionOrder
 import com.nahid.expensetracker.domain.repository.ExpenseRepository
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
+import java.time.YearMonth
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
@@ -17,76 +19,52 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val TAG = "TransectionsViewModel"
 class TransectionsViewModel(private val expenseRepository: ExpenseRepository) : ViewModel() {
-    private val mutableUiState = MutableStateFlow(TransectionsUiState())
-    private val mutableUiEvent = MutableSharedFlow<TransectionsUiEvent>()
+    private val filters = MutableStateFlow(TransectionsUiState())
+    private val messages = MutableSharedFlow<String>()
 
-    val uiState = combine(
-        mutableUiState, expenseRepository.getAllExpense()
-    ) { state, expense ->
-        val filterExpend = expense.filter {
-            if (state.selectedMonth.isNullOrEmpty()) {
-                it.type == state.selectedTab
-            } else {
-                it.type == state.selectedTab && it.date.contains(
-                    state.selectedMonth
-                )
-            }
-        }
-        Log.d(TAG, "filterData: $filterExpend")
+    val uiState = combine(filters, expenseRepository.getAllExpense()) { state, expenses ->
+        val availableMonths = (expenses.mapNotNull {
+            it.date.asTransactionDate()?.let(YearMonth::from)
+        } + YearMonth.now()).distinct().sortedDescending()
         state.copy(
-            incomeExpenseList = filterExpend
+            months = availableMonths,
+            transactions = expenses.filter { expense ->
+                (state.type == null || expense.type == state.type) &&
+                    (state.month == null || expense.isInMonth(state.month))
+            }.sortedWith(recentTransactionOrder),
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), TransectionsUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), filters.value)
 
-    val uiEvent: SharedFlow<TransectionsUiEvent> = mutableUiEvent.asSharedFlow()
+    val uiMessage = messages.asSharedFlow()
 
-    fun updateUiState(uiState: TransectionsUiState) {
-        mutableUiState.value = uiState
-    }
-
-    fun showMessage(isSuccess: Boolean, message: String) {
-        viewModelScope.launch {
-            mutableUiEvent.emit(TransectionsUiEvent.ShowMessage(Pair(isSuccess, message)))
-        }
-    }
+    fun selectType(type: String?) = filters.update { it.copy(type = type) }
+    fun selectMonth(month: YearMonth?) = filters.update { it.copy(month = month) }
+    fun requestDelete(expense: Expense?) = filters.update { it.copy(pendingDelete = expense) }
 
     fun deleteExpense() {
+        val expense = filters.value.pendingDelete ?: return
+        requestDelete(null)
         viewModelScope.launch {
-            mutableUiState.update { it.copy(isLoading = true) }
-            when (val result = expenseRepository.deleteExpense(uiState.value.deleteExpenseItem!!)) {
-                is Results.Success -> {
-                    mutableUiState.update { it.copy(isLoading = false, deleteExpenseItem = null) }
-                    showMessage(true, "Transaction deleted")
-                }
-
-                is Results.Error -> {
-                    mutableUiState.update { it.copy(isLoading = false, deleteExpenseItem = null) }
-                    showMessage(false, result.exception.message)
-                }
+            val message = when (val result = expenseRepository.deleteExpense(expense)) {
+                is Results.Success -> "Transaction deleted"
+                is Results.Error -> result.exception.message
             }
+            messages.emit(message)
         }
     }
-}
-
-sealed interface TransectionsUiEvent {
-    data class ShowMessage(val message: Pair<Boolean, String>) : TransectionsUiEvent
-    data object NavigateBack : TransectionsUiEvent
 }
 
 data class TransectionsUiState(
-    val isDarkMode: Boolean = false,
-    val isLoading: Boolean = false,
-    val selectedTab: String? = "Income",
-    val selectedMonth: String? = null,
-    val incomeExpenseList: List<Expense> = arrayListOf(),
-    val deleteExpenseItem: Expense? = null,
-    val showExpenseDeleteDialog: Boolean = false,
+    val type: String? = null,
+    val month: YearMonth? = YearMonth.now(),
+    val months: List<YearMonth> = listOf(YearMonth.now()),
+    val transactions: List<Expense> = emptyList(),
+    val pendingDelete: Expense? = null,
     val uiConfig: MainUIConfig = MainUIConfig(
-        title = "Transections",
+        title = "Transactions",
         showTopBar = true,
         showNavigation = true,
-        showSubTitle = false
+        showSubTitle = false,
     ),
 )

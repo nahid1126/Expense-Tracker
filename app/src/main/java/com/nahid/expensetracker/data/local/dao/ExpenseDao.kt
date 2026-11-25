@@ -4,44 +4,63 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
+import androidx.room.Transaction
 import com.nahid.expensetracker.data.local.entity.ExpenseEntity
-import com.nahid.expensetracker.domain.model.ExpenseSummary
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ExpenseDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertExpense(expenseEntity: ExpenseEntity)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExpense(expense: ExpenseEntity): Long
 
-    @Query("SELECT * FROM ExpenseEntity")
-    fun getAllExpense(): Flow<List<ExpenseEntity>>
+    @Query("SELECT * FROM ExpenseEntity WHERE ownerUid = :uid AND isDeleted = 0")
+    fun observeExpenses(uid: String): Flow<List<ExpenseEntity>>
 
-    @Query("SELECT * FROM ExpenseEntity WHERE id = :id")
-    fun getExpenseByID(id: Int): Flow<ExpenseEntity>
+    @Query("SELECT * FROM ExpenseEntity WHERE ownerUid = :uid AND isSynced = 0 ORDER BY id")
+    suspend fun getPending(uid: String): List<ExpenseEntity>
 
-    @Query("SELECT * FROM ExpenseEntity where type ='Expense' ORDER BY amount DESC LIMIT 5 ")
-    fun getAllTopExpense(): Flow<List<ExpenseEntity>>
+    @Query("""
+        UPDATE ExpenseEntity SET title = :title, amount = :amount, date = :date,
+            type = :type, category = :category, isSynced = 0, revision = :revision
+        WHERE id = :id AND ownerUid = :uid AND isDeleted = 0
+    """)
+    suspend fun edit(id: Int, uid: String, title: String, amount: Int, date: String,
+                     type: String, category: String, revision: String): Int
 
-    @Query("SELECT * FROM ExpenseEntity where type =:type")
-    fun getAllFilterExpense(type: String): Flow<List<ExpenseEntity>>
+    @Query("""
+        UPDATE ExpenseEntity SET isDeleted = 1, isSynced = 0, revision = :revision
+        WHERE id = :id AND ownerUid = :uid AND isDeleted = 0
+    """)
+    suspend fun markDeleted(id: Int, uid: String, revision: String): Int
 
+    @Query("UPDATE ExpenseEntity SET isSynced = 1 WHERE id = :id AND ownerUid = :uid AND revision = :revision")
+    suspend fun acknowledge(id: Int, uid: String, revision: String)
 
-    @Query("SELECT * FROM ExpenseEntity ORDER BY amount DESC LIMIT 5 ")
-    fun getLastFiveExpense(): Flow<List<ExpenseEntity>>
+    @Query("DELETE FROM ExpenseEntity WHERE id = :id AND ownerUid = :uid AND revision = :revision AND isDeleted = 1")
+    suspend fun removeTombstone(id: Int, uid: String, revision: String)
 
-    @Update
-    suspend fun updateExpense(expenseEntity: ExpenseEntity)
+    @Query("""
+        UPDATE ExpenseEntity SET title = :title, amount = :amount, date = :date,
+            type = :type, category = :category
+        WHERE ownerUid = :uid AND remoteId = :remoteId AND isSynced = 1 AND isDeleted = 0
+    """)
+    suspend fun refreshSynced(uid: String, remoteId: String, title: String, amount: Int,
+                              date: String, type: String, category: String)
 
-    @Query("DELETE FROM ExpenseEntity WHERE id = :id")
-    suspend fun deleteExpenseById(id: Int)
+    @Query("SELECT remoteId FROM ExpenseEntity WHERE ownerUid = :uid AND isSynced = 1")
+    suspend fun syncedRemoteIds(uid: String): List<String>
 
-    @Query("DELETE FROM ExpenseEntity")
-    suspend fun deleteExpense()
+    @Query("DELETE FROM ExpenseEntity WHERE ownerUid = :uid AND remoteId = :remoteId AND isSynced = 1")
+    suspend fun removeMissing(uid: String, remoteId: String)
 
-    @Query("SELECT type, date, SUM(amount) AS total_amount FROM ExpenseEntity where type = :type GROUP BY type, date ORDER BY date")
-    fun getAllExpenseByDate(type: String = "Expense"): Flow<List<ExpenseSummary>>
-
-    @Query("SELECT * FROM ExpenseEntity WHERE isSynced = 0")
-    suspend fun getUnsyncedExpenses(): List<ExpenseEntity>
+    @Transaction
+    suspend fun mergeSnapshot(uid: String, remoteIds: Set<String>, expenses: List<ExpenseEntity>) {
+        for (expense in expenses) {
+            if (insertExpense(expense) == -1L) {
+                refreshSynced(uid, expense.remoteId, expense.title, expense.amount, expense.date,
+                    expense.type, expense.category)
+            }
+        }
+        syncedRemoteIds(uid).filterNot(remoteIds::contains).forEach { removeMissing(uid, it) }
+    }
 }

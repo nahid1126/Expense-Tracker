@@ -1,227 +1,215 @@
 package com.nahid.expensetracker.ui.presentation.component
 
-import android.graphics.Paint
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlin.math.roundToInt
+import com.nahid.expensetracker.domain.model.asTaka
+import java.text.NumberFormat
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.log10
+import kotlin.math.pow
 
-data class BarChartData(val label: String, val value: Float)
+internal data class CashFlowPeriod(
+    val label: String,
+    val description: String,
+    val income: Long,
+    val expense: Long,
+)
 
 @Composable
-fun BarChart(
-    data: List<BarChartData>,
-    colors: List<Color>,
-    isIncome: Boolean = false,
-    maxLimit: Float = 0f,
-    currencySymbol: String = "৳",
-    showLabel: Boolean = true,
-    showPercentBarTop: Boolean = false,
-    showYAxis: Boolean = true,
-    showAnimation: Boolean = true,
-    animationDuration: Int = 1200,
-    modifier: Modifier = Modifier
+internal fun BarChart(
+    periods: List<CashFlowPeriod>,
+    showIncome: Boolean,
+    showExpense: Boolean,
 ) {
-    if (data.isEmpty()) return
-
-    val density = LocalDensity.current
-    val barBottomPaddingPx = with(density) { 24.dp.toPx() }
-    val yAxisWidthPx = with(density) { 50.dp.toPx() }
-    val labelColor = MaterialTheme.colorScheme.primary.toArgb()
-
-    val maxValueInData = data.maxOfOrNull { it.value } ?: 0f
-    val effectiveMaxLimit = remember(data, maxLimit, isIncome) {
-        if (maxLimit > 0f) {
-            maxLimit
-        } else {
-            val base = if (maxValueInData > 0) maxValueInData else 1000f
-            val multiplier = when {
-                base <= 1000f -> 200f
-                base <= 5000f -> 1000f
-                base <= 10000f -> 2000f
-                base <= 20000f -> 5000f
-                base <= 50000f -> 10000f
-                else -> 20000f
-            }
-            (Math.ceil(base / multiplier.toDouble()) * multiplier).toFloat().coerceAtLeast(base)
-        }
+    key(periods.map { it.description }, showIncome, showExpense) {
+        CashFlowPlot(periods, showIncome, showExpense)
     }
+}
 
-    var animationPlayed by remember { mutableStateOf(false) }
-    val animationProgress = animateFloatAsState(
-        targetValue = if (animationPlayed && showAnimation) 1f else 0f,
-        animationSpec = tween(durationMillis = animationDuration),
-        label = "bar_anim"
-    )
-    LaunchedEffect(Unit) { animationPlayed = true }
+@Composable
+private fun CashFlowPlot(
+    periods: List<CashFlowPeriod>,
+    showIncome: Boolean,
+    showExpense: Boolean,
+) {
+    var selectedIndex by rememberSaveable { mutableIntStateOf(-1) }
+    val selected = periods.getOrNull(selectedIndex)
+    val colors = MaterialTheme.colorScheme
+    val peak = periods.maxOf { maxOf(if (showIncome) it.income else 0, if (showExpense) it.expense else 0) }
+    val step = axisStep(peak)
+    val axisMax = step * 2
+    val plotHeight = 126.dp
 
-    Column(
-        modifier = modifier.padding(horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Bottom
-    ) {
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            val barCount = data.size
-            val barSpacing = with(density) { 12.dp.toPx() }
-            val minBarWidth = with(density) { 28.dp.toPx() }
-            val effectiveYAxisSpacingPx = if (showYAxis) yAxisWidthPx else 0f
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (showIncome) {
+                ChartTotal(
+                    "Income", selected?.income ?: periods.sumOf { it.income },
+                    colors.primary, colors.primaryContainer, colors.onPrimaryContainer,
+                    Modifier.weight(1f),
+                )
+            }
+            if (showExpense) {
+                ChartTotal(
+                    "Expenses", selected?.expense ?: periods.sumOf { it.expense },
+                    colors.tertiary, colors.tertiaryContainer, colors.onTertiaryContainer,
+                    Modifier.weight(1f),
+                )
+            }
+        }
 
-            val availableWidth = constraints.maxWidth.toFloat() - effectiveYAxisSpacingPx
-            val calculatedBarWidth =
-                (availableWidth - (barSpacing * (barCount + 1))) / barCount.coerceAtLeast(1)
-            val barWidth = if (calculatedBarWidth < minBarWidth) minBarWidth else calculatedBarWidth
-            val totalContentWidth = (barWidth + barSpacing) * barCount + barSpacing
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                // ---------- Y AXIS & GRID (Fixed) ----------
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val chartHeight = size.height - barBottomPaddingPx
-
-                    if (showYAxis) {
-                        val stepCount = 5
-                        val valueStep = effectiveMaxLimit / stepCount
-                        val yValues = (0..stepCount).map { it * valueStep }
-
-                        yValues.forEach { valItem ->
-                            val y = chartHeight - (valItem * (chartHeight / effectiveMaxLimit))
-
-                            // Grid Line
-                            drawLine(
-                                color = Color.LightGray.copy(alpha = 0.3f),
-                                start = Offset(effectiveYAxisSpacingPx, y),
-                                end = Offset(size.width, y),
-                                strokeWidth = 1f
-                            )
-
-                            // Y Label
-                            val formattedLabel = when {
-                                valItem == 0f -> "0"
-                                valItem < 1000f -> valItem.toInt().toString()
-                                valItem >= 1000f -> "${(valItem / 1000).toInt()}k"
-                                else -> valItem.toInt().toString()
-                            }
-
-                            drawContext.canvas.nativeCanvas.drawText(
-                                "$currencySymbol $formattedLabel",
-                                effectiveYAxisSpacingPx - 10f,
-                                y + 8f,
-                                Paint().apply {
-                                    color = labelColor
-                                    textSize = 24f
-                                    textAlign = Paint.Align.RIGHT
-                                    isAntiAlias = true
-                                }
-                            )
-                        }
-                    }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            Column(
+                Modifier.height(plotHeight),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                for (tick in listOf(axisMax, step, 0)) {
+                    Text(
+                        axisLabel(tick),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                    )
                 }
-
-                // ---------- SCROLLABLE BARS & X AXIS LABELS ----------
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = with(density) { effectiveYAxisSpacingPx.toDp() })
-                        .horizontalScroll(rememberScrollState())
-                ) {
-                    Canvas(
-                        modifier = Modifier
-                            .weight(1f)
-                            .width(with(density) { totalContentWidth.toDp() })
-                    ) {
-                        val chartHeight = size.height // Height is already constrained by weight(1f)
-
-                        data.forEachIndexed { index, item ->
-                            val scaleFactor = chartHeight / effectiveMaxLimit
-                            val barHeight = (item.value.coerceAtMost(effectiveMaxLimit) * scaleFactor) * animationProgress.value
-
-                            val left = barSpacing + index * (barWidth + barSpacing)
-                            val top = chartHeight - barHeight
-
-                            // Main Bar with rounded top
-                            drawRoundRect(
-                                color = colors[index % colors.size],
-                                topLeft = Offset(left, top),
-                                size = Size(barWidth, barHeight),
-                                cornerRadius = CornerRadius(8f, 8f)
-                            )
-
-                            // Optional percentage/value on top
-                            if (showPercentBarTop && barHeight > 20f) {
-                                drawContext.canvas.nativeCanvas.drawText(
-                                    item.value.roundToInt().toString(),
-                                    left + barWidth / 2,
-                                    top - 10f,
-                                    Paint().apply {
-                                        color = labelColor
-                                        textSize = 22f
-                                        textAlign = Paint.Align.CENTER
-                                        isFakeBoldText = true
+            }
+            BoxWithConstraints(Modifier.weight(1f)) {
+                val slotWidth = maxOf(52.dp, maxWidth / periods.size.coerceAtLeast(1))
+                val visibleSlots = (maxWidth / slotWidth).toInt().coerceAtLeast(1)
+                val scrollState = rememberLazyListState(
+                    initialFirstVisibleItemIndex = (periods.size - visibleSlots).coerceAtLeast(0),
+                )
+                Column(Modifier.fillMaxWidth().height(plotHeight), verticalArrangement = Arrangement.SpaceBetween) {
+                    repeat(3) { HorizontalDivider(color = colors.outlineVariant) }
+                }
+                LazyRow(state = scrollState) {
+                    itemsIndexed(periods, key = { _, period -> period.description }) { index, period ->
+                        val active = selectedIndex == index
+                        Column(
+                            Modifier.width(slotWidth).clip(RoundedCornerShape(9.dp))
+                                .background(if (active) colors.surfaceContainer else Color.Transparent)
+                                .selectable(
+                                    selected = active,
+                                    role = Role.Button,
+                                    onClick = { selectedIndex = if (active) -1 else index },
+                                )
+                                .semantics {
+                                    val summary = buildList {
+                                        add(period.description)
+                                        if (showIncome) add("Income ${period.income.asTaka()}")
+                                        if (showExpense) add("Expenses ${period.expense.asTaka()}")
                                     }
-                                )
-                            }
-                        }
-
-                        // ---------- X AXIS LINE ----------
-                        drawLine(
-                            color = Color.Gray.copy(alpha = 0.4f),
-                            start = Offset(0f, chartHeight),
-                            end = Offset(totalContentWidth, chartHeight),
-                            strokeWidth = 2f
-                        )
-                    }
-
-                    // ---------- X AXIS LABELS ----------
-                    if (showLabel) {
-                        Row(
-                            modifier = Modifier
-                                .width(with(density) { totalContentWidth.toDp() })
-                                .height(with(density) { barBottomPaddingPx.toDp() }),
-                            verticalAlignment = Alignment.CenterVertically
+                                    contentDescription = summary.joinToString(", ")
+                                },
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            data.forEachIndexed { index, item ->
-                                Spacer(modifier = Modifier.width(with(density) { barSpacing.toDp() }))
-                                Text(
-                                    text = item.label,
-                                    modifier = Modifier.width(with(density) { barWidth.toDp() }),
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Medium,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                if (index == data.size - 1) {
-                                    Spacer(modifier = Modifier.width(with(density) { barSpacing.toDp() }))
-                                }
+                            Row(
+                                Modifier.height(plotHeight),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.Bottom,
+                            ) {
+                                if (showIncome) ChartBar(period.income, axisMax, plotHeight, colors.primary)
+                                if (showExpense) ChartBar(period.expense, axisMax, plotHeight, colors.tertiary)
                             }
+                            Text(
+                                period.label,
+                                Modifier.padding(horizontal = 2.dp, vertical = 5.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (active) colors.onSurface else colors.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
                         }
                     }
                 }
             }
         }
+
+        Text(
+            selected?.description ?: "Tap a bar to see its totals",
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.onSurfaceVariant,
+        )
     }
+}
+
+@Composable
+private fun ChartBar(amount: Long, axisMax: Long, plotHeight: Dp, color: Color) {
+    val fraction = (amount.toDouble() / axisMax).coerceIn(0.0, 1.0).toFloat()
+    Box(
+        Modifier.width(16.dp).height(plotHeight * fraction)
+            .background(color, RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)),
+    )
+}
+
+@Composable
+private fun ChartTotal(
+    label: String,
+    value: Long,
+    accent: Color,
+    container: Color,
+    foreground: Color,
+    modifier: Modifier,
+) {
+    Surface(modifier, shape = RoundedCornerShape(14.dp), color = container, contentColor = foreground) {
+        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(8.dp).background(accent, CircleShape))
+                Text(label, style = MaterialTheme.typography.labelMedium)
+            }
+            Text(value.asTaka(), style = MaterialTheme.typography.titleMedium)
+        }
+    }
+}
+
+private fun axisStep(peak: Long): Long {
+    val midpoint = (peak / 2.0).coerceAtLeast(1.0)
+    val magnitude = 10.0.pow(floor(log10(midpoint)))
+    return (ceil(midpoint / magnitude) * magnitude).toLong()
+}
+
+private fun axisLabel(value: Long): String {
+    val (unit, suffix) = when {
+        value >= 1_000_000_000 -> 1_000_000_000 to "B"
+        value >= 1_000_000 -> 1_000_000 to "M"
+        value >= 1_000 -> 1_000 to "K"
+        else -> return value.asTaka()
+    }
+    val formatted = NumberFormat.getNumberInstance().apply { maximumFractionDigits = 1 }
+        .format(value.toDouble() / unit)
+    return "৳$formatted$suffix"
 }
