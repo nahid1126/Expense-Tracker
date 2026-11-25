@@ -14,28 +14,6 @@ Track income and expenses, see where your money goes, and keep recording transac
 
 Sign in once while online. After that, you can add, edit, and delete transactions offline while signed in. Changes are saved in Room first and remain associated with your account. Pending transactions show **Pending sync** in the app. WorkManager attempts to sync with Firestore when connectivity returns. Opening Home also queues any remaining pending changes for your account.
 
-## Run locally
-
-1. Open the project in Android Studio and sync Gradle. The project compiles against Android SDK 36 and runs on Android 9 (API 28) or later.
-2. Run the `app` configuration on an emulator or Android device.
-3. For your own Firebase project, use its Android configuration in `app/google-services.json` and configure Google sign-in and Firestore for that project.
-
-Build the debug APK and run the JVM tests and lint from the project root.
-
-```sh
-./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
-```
-
-Room migration and account isolation instrumentation tests run on a connected emulator or device.
-
-```sh
-./gradlew :app:connectedDebugAndroidTest
-```
-
-## Release signing
-
-Set `EXPENSE_RELEASE_STORE_FILE`, `EXPENSE_RELEASE_STORE_PASSWORD`, `EXPENSE_RELEASE_KEY_ALIAS`, and `EXPENSE_RELEASE_KEY_PASSWORD` in your local environment or CI secret store. Use an absolute keystore path outside the checkout. A release build without these variables produces an unsigned artifact.
-
 ## Existing data
 
 The Room migration preserves version 1 rows. Since those rows did not record account ownership, they are excluded from account views and background uploads. Previously synced transactions come back from the signed-in account's cloud history. Unsynced version 1 rows remain in the local database for deliberate recovery.
