@@ -16,24 +16,24 @@ interface ExpenseDao {
     @Query("SELECT * FROM ExpenseEntity WHERE ownerUid = :uid AND isDeleted = 0")
     fun observeExpenses(uid: String): Flow<List<ExpenseEntity>>
 
-    @Query("SELECT * FROM ExpenseEntity WHERE ownerUid = :uid AND isSynced = 0 ORDER BY id")
+    @Query("SELECT * FROM ExpenseEntity WHERE ownerUid = :uid AND isSynced = 0 AND syncFailed = 0 ORDER BY id")
     suspend fun getPending(uid: String): List<ExpenseEntity>
 
     @Query("""
         UPDATE ExpenseEntity SET title = :title, amount = :amount, date = :date,
-            type = :type, category = :category, isSynced = 0, revision = :revision
+            type = :type, category = :category, isSynced = 0, syncFailed = 0, revision = :revision
         WHERE id = :id AND ownerUid = :uid AND isDeleted = 0
     """)
     suspend fun edit(id: Int, uid: String, title: String, amount: Int, date: String,
                      type: String, category: String, revision: String): Int
 
     @Query("""
-        UPDATE ExpenseEntity SET isDeleted = 1, isSynced = 0, revision = :revision
+        UPDATE ExpenseEntity SET isDeleted = 1, isSynced = 0, syncFailed = 0, revision = :revision
         WHERE id = :id AND ownerUid = :uid AND isDeleted = 0
     """)
     suspend fun markDeleted(id: Int, uid: String, revision: String): Int
 
-    @Query("UPDATE ExpenseEntity SET isSynced = 1 WHERE id = :id AND ownerUid = :uid AND revision = :revision")
+    @Query("UPDATE ExpenseEntity SET isSynced = 1, syncFailed = 0 WHERE id = :id AND ownerUid = :uid AND revision = :revision")
     suspend fun acknowledge(id: Int, uid: String, revision: String)
 
     @Query("DELETE FROM ExpenseEntity WHERE id = :id AND ownerUid = :uid AND revision = :revision AND isDeleted = 1")
@@ -46,6 +46,15 @@ interface ExpenseDao {
     """)
     suspend fun refreshSynced(uid: String, remoteId: String, title: String, amount: Int,
                               date: String, type: String, category: String)
+
+    @Query("SELECT COUNT(*) FROM ExpenseEntity WHERE ownerUid = :uid AND syncFailed = 1")
+    fun observeFailedSyncCount(uid: String): Flow<Int>
+
+    @Query("UPDATE ExpenseEntity SET syncFailed = 1 WHERE id = :id AND ownerUid = :uid AND revision = :revision")
+    suspend fun markSyncFailed(id: Int, uid: String, revision: String)
+
+    @Query("UPDATE ExpenseEntity SET syncFailed = 0 WHERE ownerUid = :uid AND syncFailed = 1")
+    suspend fun resetFailedSync(uid: String)
 
     @Query("SELECT remoteId FROM ExpenseEntity WHERE ownerUid = :uid AND isSynced = 1")
     suspend fun syncedRemoteIds(uid: String): List<String>

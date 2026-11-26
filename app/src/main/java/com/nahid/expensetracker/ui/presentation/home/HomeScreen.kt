@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,6 +73,7 @@ fun HomeScreen(
     toExit: () -> Unit = {},
     onUpdate: (Expense) -> Unit,
     onSeeAllClicked: () -> Unit,
+    bottomBarPadding: Dp = 0.dp,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     BackHandler { viewModel.showExitDialog(true) }
@@ -80,7 +82,7 @@ fun HomeScreen(
         viewModel.getInitialData()
     }
 
-    Dashboard(state, onUpdate, onSeeAllClicked)
+    Dashboard(state, onUpdate, onSeeAllClicked, bottomBarPadding, viewModel::retrySync)
 
     if (state.showExitDialog) {
         ConfirmationDialog(
@@ -102,6 +104,8 @@ private fun Dashboard(
     state: HomeUiState,
     onUpdate: (Expense) -> Unit,
     onSeeAllClicked: () -> Unit,
+    bottomBarPadding: Dp = 0.dp,
+    onRetrySync: () -> Unit = {},
 ) {
     Box(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -109,8 +113,25 @@ private fun Dashboard(
     ) {
         LazyColumn(
             modifier = Modifier.widthIn(max = 590.dp).fillMaxSize(),
-            contentPadding = PaddingValues(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 16.dp),
+            contentPadding = PaddingValues(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 16.dp + bottomBarPadding),
         ) {
+            if (state.failedSyncCount > 0) {
+                item {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            "Sync failed for ${state.failedSyncCount} changes",
+                            Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        TextButton(onClick = onRetrySync) { Text("Retry sync") }
+                    }
+                }
+            }
             item { BalanceSummary(state, onSeeAllClicked) }
             item {
                 Column(Modifier.padding(top = 24.dp)) {
@@ -383,7 +404,11 @@ internal fun TransactionItem(
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                 )
                 Text(
-                    if (expense.isSynced) expense.category else "${expense.category} · Pending sync",
+                    when {
+                        expense.syncFailed -> "${expense.category} · Sync failed"
+                        expense.isSynced -> expense.category
+                        else -> "${expense.category} · Pending sync"
+                    },
                     color = colors.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )

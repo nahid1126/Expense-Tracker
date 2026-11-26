@@ -68,8 +68,7 @@ private fun NavigationDock(
     Box(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = AppSpacing.Layout.screenPadding, vertical = AppSpacing.Size.md)
-            .background(colors.background),
+            .padding(horizontal = AppSpacing.Layout.screenPadding, vertical = AppSpacing.Size.md),
         contentAlignment = Alignment.TopCenter,
     ) {
         Surface(
@@ -78,9 +77,8 @@ private fun NavigationDock(
                 .fillMaxWidth()
                 .padding(top = 16.dp),
             shape = BottomNavCutoutShape(),
-            color = colors.surfaceContainerLow,
+            color = colors.surfaceContainerLow.copy(alpha = 1f),
             border = BorderStroke(1.dp, colors.outlineVariant),
-            shadowElevation = 3.dp,
         ) {
             Row(
                 Modifier
@@ -125,7 +123,7 @@ private fun NavigationDock(
                     Box(Modifier.size(50.dp), contentAlignment = Alignment.Center) {
                         Icon(
                             Icons.Default.Add,
-                            contentDescription = null,
+                            contentDescription = "Add transaction",
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -156,14 +154,16 @@ private fun NavBarItem(
         modifier
             .clip(RoundedCornerShape(10.dp))
             .selectable(selected = selected, role = Role.Tab, onClick = onClick)
-            .heightIn(min = 20.dp)
-            .padding(horizontal = 4.dp, vertical = 5.dp),
+            .heightIn(min = AppSpacing.Size.sm)
+            .padding(horizontal = AppSpacing.Size.sm, vertical = AppSpacing.Size.md),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Box(
             Modifier
-                .width(52.dp),
+                .width(52.dp)
+                .background(indicator, CircleShape)
+                .padding(vertical = 3.dp),
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, null, Modifier.size(24.dp), tint = foreground)

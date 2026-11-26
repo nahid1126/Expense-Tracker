@@ -53,6 +53,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,6 +82,7 @@ fun TransectionsScreen(
     onShowMessage: (String) -> Unit,
     onBack: () -> Unit,
     onUpdate: (Expense) -> Unit,
+    bottomBarPadding: Dp = 0.dp,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     BackHandler(onBack = onBack)
@@ -95,6 +97,7 @@ fun TransectionsScreen(
         onMonthSelect = viewModel::selectMonth,
         onUpdate = onUpdate,
         onDelete = viewModel::requestDelete,
+        bottomBarPadding = bottomBarPadding,
     )
     state.pendingDelete?.let { expense ->
         ConfirmationDialog(
@@ -115,7 +118,8 @@ private fun TransactionHistory(
     onMonthSelect: (YearMonth?) -> Unit,
     onUpdate: (Expense) -> Unit,
     onDelete: (Expense) -> Unit,
-    initiallyShowInsights: Boolean = true,
+    initiallyShowInsights: Boolean = false,
+    bottomBarPadding: Dp = 0.dp,
 ) {
     var showInsights by rememberSaveable { mutableStateOf(initiallyShowInsights) }
     val byDay = remember(state.transactions) {
@@ -128,7 +132,7 @@ private fun TransactionHistory(
     ) {
         LazyColumn(
             modifier = Modifier.widthIn(max = 590.dp).fillMaxSize(),
-            contentPadding = PaddingValues(start = 22.dp, end = 22.dp, top = 12.dp, bottom = 16.dp),
+            contentPadding = PaddingValues(start = 22.dp, end = 22.dp, top = 12.dp, bottom = 16.dp + bottomBarPadding),
         ) {
             item {
                 Row(
@@ -155,6 +159,7 @@ private fun TransactionHistory(
                     }
                 }
             }
+            item { PeriodSummary(state.incomeTotal, state.expenseTotal) }
             if (showInsights && state.transactions.isNotEmpty()) {
                 item { HistoryInsights(state) }
             }
@@ -258,6 +263,28 @@ private fun MonthFilter(
 }
 
 @Composable
+private fun PeriodSummary(income: Long, expense: Long) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        color = colors.surfaceContainerLow,
+        shape = RoundedCornerShape(18.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf("Income" to income, "Expenses" to expense, "Net balance" to income - expense).forEach { (label, value) ->
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(label, style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                    Text(value.asTaka(), style = MaterialTheme.typography.labelLarge, color = colors.onSurface)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun HistoryInsights(state: TransectionsUiState) {
     var showTimeline by rememberSaveable { mutableStateOf(false) }
     Surface(
@@ -327,17 +354,14 @@ private val reportColors = listOf(
 @Composable
 private fun CategoryReport(state: TransectionsUiState) {
     val categories = remember(state.transactions) {
-        val ranked = state.transactions.filter { it.amount > 0 }.groupBy {
+        state.transactions.groupBy {
             it.category.trim().ifBlank { "Uncategorized" }.lowercase(Locale.ROOT)
         }.values.map { rows ->
-            ReportCategory(rows.first().category.trim().ifBlank { "Uncategorized" }, rows.sumOf { it.amount.toLong() })
+            ReportCategory(rows.first().category.trim().ifBlank { "Uncategorized" }, rows.sumOf { it.amount.toLong().coerceAtLeast(0L) })
         }.sortedWith(compareByDescending<ReportCategory> { it.amount }.thenBy { it.name })
-        if (ranked.size <= reportColors.size) ranked
-        else ranked.take(reportColors.size - 1) +
-            ReportCategory("Other categories", ranked.drop(reportColors.size - 1).sumOf { it.amount })
     }
     val total = categories.sumOf { it.amount }
-    if (total == 0L) {
+    if (categories.isEmpty()) {
         Text("No amounts to chart.", style = MaterialTheme.typography.bodyMedium)
         return
     }
@@ -345,12 +369,23 @@ private fun CategoryReport(state: TransectionsUiState) {
     val caption = when (state.type) {
         "Income" -> "Total income"
         "Expense" -> "Total expenses"
-        else -> "Income + expenses"
+        else -> "Net balance"
+    }
+    val centerAmount = if (state.type == null) {
+        state.transactions.sumOf { transaction ->
+            when (transaction.type) {
+                "Income" -> transaction.amount.toLong()
+                "Expense" -> -transaction.amount.toLong()
+                else -> 0L
+            }
+        }
+    } else {
+        total
     }
     val percent = remember { NumberFormat.getPercentInstance() }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
-            Modifier.align(Alignment.CenterHorizontally).size(216.dp),
+            Modifier.align(Alignment.CenterHorizontally).size(200.dp),
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.matchParentSize()) {
@@ -358,10 +393,11 @@ private fun CategoryReport(state: TransectionsUiState) {
                 val inset = strokeWidth / 2
                 var angle = -90f
                 categories.forEachIndexed { index, category ->
+                    if (category.amount == 0L) return@forEachIndexed
                     val sweep = (category.amount.toDouble() / total * 360).toFloat()
                     val gap = if (categories.size == 1) 0f else minOf(5f, sweep / 4)
                     drawArc(
-                        color = reportColors[index],
+                        color = reportColors[index % reportColors.size],
                         startAngle = angle + gap / 2,
                         sweepAngle = sweep - gap,
                         useCenter = false,
@@ -380,7 +416,7 @@ private fun CategoryReport(state: TransectionsUiState) {
                 Text(caption, style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant,
                     textAlign = TextAlign.Center)
                 Text(
-                    total.asTaka(),
+                    centerAmount.asTaka(),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     maxLines = 1,
@@ -389,14 +425,21 @@ private fun CategoryReport(state: TransectionsUiState) {
                 )
             }
         }
+        if (state.type == null) {
+            Text(
+                "Category shares of income and expenses",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant,
+            )
+        }
         categories.forEachIndexed { index, category ->
-            val share = category.amount.toDouble() / total
+            val share = if (total > 0L) category.amount.toDouble() / total else 0.0
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(9.dp).background(reportColors[index], CircleShape))
+                Box(Modifier.size(9.dp).background(reportColors[index % reportColors.size], CircleShape))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(category.name, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
@@ -405,7 +448,7 @@ private fun CategoryReport(state: TransectionsUiState) {
                     LinearProgressIndicator(
                         progress = { share.toFloat() },
                         modifier = Modifier.fillMaxWidth().height(4.dp),
-                        color = reportColors[index],
+                        color = reportColors[index % reportColors.size],
                         trackColor = colors.surfaceContainer,
                         gapSize = 0.dp,
                         drawStopIndicator = {},
@@ -430,7 +473,8 @@ private fun TransactionHistoryPreview() {
             Expense(id = 6, title = "Books", amount = 1900, date = "2026-11-22", type = "Expense", category = "Shopping", isSynced = true),
         )
         TransactionHistory(
-            TransectionsUiState(month = YearMonth.of(2026, 11), transactions = items),
+            TransectionsUiState(month = YearMonth.of(2026, 11), transactions = items,
+                incomeTotal = 9650, expenseTotal = 8850),
             onTypeSelect = {},
             onMonthSelect = {},
             onUpdate = {},

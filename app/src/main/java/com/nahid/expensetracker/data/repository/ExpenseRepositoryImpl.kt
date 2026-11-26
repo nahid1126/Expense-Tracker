@@ -8,10 +8,14 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.FirebaseFirestoreException.Code
 import com.google.firebase.firestore.Source
 import com.nahid.expensetracker.core.Results
 import com.nahid.expensetracker.core.utils.extension.getSpecificException
+import com.nahid.expensetracker.data.local.AppPreference
 import com.nahid.expensetracker.data.local.dao.ExpenseDao
+import java.io.IOException
 import com.nahid.expensetracker.data.local.entity.ExpenseEntity
 import com.nahid.expensetracker.data.local.entity.toDomain
 import com.nahid.expensetracker.data.model.ExpenseCategoryDto
@@ -32,6 +36,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,14 +48,29 @@ class ExpenseRepositoryImpl(
     private val db: FirebaseFirestore,
     private val expenseDao: ExpenseDao,
     private val workManager: WorkManager,
+    private val appPreference: AppPreference,
 ) : ExpenseRepository {
     private val cloudMutex = Mutex()
 
     override suspend fun getExpCategory(): Results<List<ExpenseCategory>> {
-        val fallback = listOf("Food", "Transport", "Shopping", "Home", "Health", "Entertainment", "Salary", "Other")
+        val fallback = listOf("Food", "Transport", "Shopping", "Home", "Health", "Entertainment", "Salary", "Pocket Money", "Other")
             .mapIndexed { index, name -> ExpenseCategory(index.toLong() + 1, name) }
         val remote = loadOptions("expenseCategory") { it.toObject(ExpenseCategoryDto::class.java)?.toDomain() }
-        return Results.Success(remote.sortedBy { it.id }.ifEmpty { fallback })
+        val categories = remote.filter { it.name.isNotBlank() }.sortedBy { it.id }
+        if (categories.isNotEmpty()) {
+            try {
+                appPreference.saveExpenseCategories(categories)
+            } catch (_: IOException) {
+                // The fetched categories are still usable for this session.
+            }
+            return Results.Success(categories)
+        }
+        val cached = try {
+            appPreference.readExpenseCategories().first()
+        } catch (_: IOException) {
+            emptyList()
+        }
+        return Results.Success(cached.ifEmpty { fallback })
     }
 
     override suspend fun getExpenseType(): Results<List<ExpenseType>> {
@@ -66,7 +86,7 @@ class ExpenseRepositoryImpl(
     ): List<T> {
         val reference = db.collection(collection)
         val result = withTimeoutOrNull(1_500) {
-            when (val response = attempt { reference.get(Source.DEFAULT).await().documents.mapNotNull(convert) }) {
+            when (val response = attempt { reference.get(Source.SERVER).await().documents.mapNotNull(convert) }) {
                 is Results.Success -> response.data
                 is Results.Error -> emptyList()
             }
@@ -111,18 +131,31 @@ class ExpenseRepositoryImpl(
 
     override suspend fun syncUnsyncedExpenses(uid: String): Results<Unit> = attempt {
         cloudMutex.withLock {
+            var retryableError: FirebaseFirestoreException? = null
             for (entity in expenseDao.getPending(uid)) {
                 if (auth.currentUser?.uid != uid) break
                 val id = requireNotNull(entity.id)
                 val reference = expenses(uid).document(entity.remoteId)
-                if (entity.isDeleted) {
-                    reference.delete().await()
-                    expenseDao.removeTombstone(id, uid, entity.revision)
-                } else {
-                    reference.set(entity.toDomain().toDto()).await()
-                    expenseDao.acknowledge(id, uid, entity.revision)
+                try {
+                    if (entity.isDeleted) {
+                        reference.delete().await()
+                        expenseDao.removeTombstone(id, uid, entity.revision)
+                    } else {
+                        reference.set(entity.toDomain().toDto()).await()
+                        expenseDao.acknowledge(id, uid, entity.revision)
+                    }
+                } catch (error: FirebaseFirestoreException) {
+                    if (auth.currentUser?.uid != uid) break
+                    when (error.code) {
+                        Code.PERMISSION_DENIED, Code.UNAUTHENTICATED, Code.INVALID_ARGUMENT,
+                        Code.FAILED_PRECONDITION, Code.OUT_OF_RANGE, Code.UNIMPLEMENTED -> {
+                            expenseDao.markSyncFailed(id, uid, entity.revision)
+                        }
+                        else -> retryableError = error
+                    }
                 }
             }
+            retryableError?.let { throw it }
         }
     }
 
@@ -134,15 +167,27 @@ class ExpenseRepositoryImpl(
         workManager.enqueueUniqueWork("ExpenseSync:$uid", ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
+    override suspend fun retryFailedSync(): Results<Unit> = withAccount { uid ->
+        expenseDao.resetFailedSync(uid)
+        scheduleSync(uid)
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getAllExpense(): Flow<List<Expense>> = callbackFlow {
-        val listener = FirebaseAuth.AuthStateListener { trySend(it.currentUser?.uid) }
-        auth.addAuthStateListener(listener)
-        awaitClose { auth.removeAuthStateListener(listener) }
-    }.distinctUntilChanged().flatMapLatest { uid ->
+    override fun observeFailedSyncCount(): Flow<Int> = observeAccount().flatMapLatest { uid ->
+        if (uid == null) flowOf(0) else expenseDao.observeFailedSyncCount(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getAllExpense(): Flow<List<Expense>> = observeAccount().flatMapLatest { uid ->
         if (uid == null) flowOf(emptyList())
         else expenseDao.observeExpenses(uid).map { rows -> rows.map(ExpenseEntity::toDomain) }
     }
+
+    private fun observeAccount(): Flow<String?> = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { trySend(it.currentUser?.uid) }
+        auth.addAuthStateListener(listener)
+        awaitClose { auth.removeAuthStateListener(listener) }
+    }.distinctUntilChanged()
 
     private fun expenses(uid: String) = db.collection("users").document(uid).collection("expenses")
 

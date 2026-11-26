@@ -9,5 +9,6 @@ data class Expense(
     val date: String,
     val type: String,
     val category: String,
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    val syncFailed: Boolean = false,
 )

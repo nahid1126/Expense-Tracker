@@ -14,6 +14,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
@@ -46,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -146,6 +150,10 @@ fun App(
             }
         )
     }
+    val showBottomBar = currentBackStack?.destination?.let { dest ->
+        dest.hasRoute(Destinations.Home::class) || dest.hasRoute(Destinations.Transections::class)
+    } ?: false
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
@@ -206,10 +214,6 @@ fun App(
             }
         },
         bottomBar = {
-            val showBottomBar = currentBackStack?.destination?.let { dest ->
-                dest.hasRoute(Destinations.Home::class) || dest.hasRoute(Destinations.Transections::class)
-            } ?: false
-
             AnimatedVisibility(
                 visible = showBottomBar,
                 enter = slideInVertically(
@@ -238,10 +242,21 @@ fun App(
         },
     ) { innerPadding ->
 
-        Box(Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)) {
+        val direction = LocalLayoutDirection.current
+        val screenPadding = if (showBottomBar) {
+            PaddingValues(
+                start = innerPadding.calculateStartPadding(direction),
+                top = innerPadding.calculateTopPadding(),
+                end = innerPadding.calculateEndPadding(direction),
+            )
+        } else {
+            innerPadding
+        }
+        Box(Modifier.padding(screenPadding).consumeWindowInsets(innerPadding)) {
             NavGraph(
                 navController = navController,
                 gmail = gmail,
+                bottomBarPadding = if (showBottomBar) innerPadding.calculateBottomPadding() else 0.dp,
                 onChangeConfiguration = { config ->
                     viewModel.updateUiState(
                         uiState.copy(

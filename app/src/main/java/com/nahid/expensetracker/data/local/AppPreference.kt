@@ -6,6 +6,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.nahid.expensetracker.domain.model.ThemeMode
+import com.nahid.expensetracker.domain.model.ExpenseCategory
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -18,6 +22,7 @@ class AppPreference(private val dataStore: DataStore<Preferences>) {
         val USER_NAME = stringPreferencesKey("user_name")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
         private val LEGACY_DARK_MODE = booleanPreferencesKey("mode")
+        private val EXPENSE_CATEGORIES = stringPreferencesKey("expense_categories")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         val HAS_LOCATION = booleanPreferencesKey("has_location")
     }
@@ -72,6 +77,19 @@ class AppPreference(private val dataStore: DataStore<Preferences>) {
     fun readUserGmail(): Flow<String> {
         return dataStore.data.map {
             it[USER_GMAIL] ?: ""
+        }
+    }
+
+    suspend fun saveExpenseCategories(categories: List<ExpenseCategory>) {
+        dataStore.edit { it[EXPENSE_CATEGORIES] = Json.encodeToString(categories) }
+    }
+
+    fun readExpenseCategories(): Flow<List<ExpenseCategory>> = dataStore.data.map { preferences ->
+        val encoded = preferences[EXPENSE_CATEGORIES] ?: return@map emptyList()
+        try {
+            Json.decodeFromString(encoded)
+        } catch (_: SerializationException) {
+            emptyList()
         }
     }
 

@@ -27,9 +27,10 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nahid.expensetracker.BuildConfig
 import com.nahid.expensetracker.R
 import com.nahid.expensetracker.core.AppSpacing
-import com.nahid.expensetracker.data.local.AppPreference
+import com.nahid.expensetracker.domain.repository.AuthRepository
 import com.nahid.expensetracker.domain.uiconfig.MainUIConfig
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
@@ -52,7 +53,7 @@ fun SplashScreen(
         )
     }
 
-    val dataStoreRepository = koinInject<AppPreference>()
+    val authRepository = koinInject<AuthRepository>()
 
     // Animation states
     var startAnimation by remember { mutableStateOf(false) }
@@ -67,14 +68,8 @@ fun SplashScreen(
 
     LaunchedEffect(Unit) {
         startAnimation = true
-        dataStoreRepository.readUserId().collect { userId ->
-            delay(2000) // Give time for animation
-            if (userId.isNotEmpty()) {
-                toHome()
-            } else {
-                toLogin()
-            }
-        }
+        delay(1000)
+        if (authRepository.hasActiveSession()) toHome() else toLogin()
 
     }
 
@@ -154,7 +149,7 @@ fun SplashScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Version 1.0.0",
+                        text = "Version ${BuildConfig.VERSION_NAME}",
                         style = MaterialTheme.typography.labelMedium.copy(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

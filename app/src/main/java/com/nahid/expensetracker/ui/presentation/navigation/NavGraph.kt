@@ -7,6 +7,8 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -28,6 +30,7 @@ import kotlinx.serialization.json.Json
 fun NavGraph(
     navController: NavHostController,
     gmail: String?,
+    bottomBarPadding: Dp = 0.dp,
     startDestinations: Destinations = Destinations.SplashScreen,
     onBottomNavigationChange: (Int) -> Unit,
     onChangeConfiguration: (MainUIConfig) -> Unit,
@@ -40,6 +43,7 @@ fun NavGraph(
         homeGraph(
             navController = navController,
             gmail = gmail,
+            bottomBarPadding = bottomBarPadding,
             onChangeConfiguration = onChangeConfiguration,
             onShowMessage = onShowMessage,
             onExit = onExit
@@ -93,6 +97,7 @@ private fun NavGraphBuilder.authGraph(
 private fun NavGraphBuilder.homeGraph(
     navController: NavHostController,
     gmail: String?,
+    bottomBarPadding: Dp,
     onChangeConfiguration: (MainUIConfig) -> Unit,
     onShowMessage: (String) -> Unit,
     onExit: () -> Unit,
@@ -105,6 +110,7 @@ private fun NavGraphBuilder.homeGraph(
     }) {
         if (gmail != null) {
             HomeScreen(
+                bottomBarPadding = bottomBarPadding,
                 onChangeConfiguration = onChangeConfiguration,
                 toExit = { onExit() },
                 onSeeAllClicked = {
@@ -120,6 +126,7 @@ private fun NavGraphBuilder.homeGraph(
 
     composable<Destinations.Transections>(enterTransition = { defaultEnterTransition() }) {
         TransectionsScreen(
+            bottomBarPadding = bottomBarPadding,
             onChangeConfiguration = onChangeConfiguration,
             onShowMessage = onShowMessage,
             onBack = {

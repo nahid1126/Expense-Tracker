@@ -19,6 +19,7 @@ data class ExpenseEntity(
     @ColumnInfo(defaultValue = "''") val remoteId: String,
     @ColumnInfo(defaultValue = "''") val revision: String = "",
     @ColumnInfo(defaultValue = "0") val isDeleted: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val syncFailed: Boolean = false,
 )
 
-fun ExpenseEntity.toDomain() = Expense(id, title, amount, date, type, category, isSynced)
+fun ExpenseEntity.toDomain() = Expense(id, title, amount, date, type, category, isSynced, syncFailed)

@@ -30,8 +30,8 @@ android {
         applicationId = "com.nahid.expensetracker"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -78,13 +78,35 @@ android {
     }
 }
 
+// The signed APK wizard supplies these through Android Studio's Gradle invocation.
+val hasIdeSigning = listOf(
+    "android.injected.signing.store.file",
+    "android.injected.signing.store.password",
+    "android.injected.signing.key.alias",
+    "android.injected.signing.key.password",
+).all { !providers.gradleProperty(it).orNull.isNullOrBlank() }
+
+val verifyReleaseSigning by tasks.registering {
+    doLast {
+        check(hasReleaseSigning || hasIdeSigning) {
+            "Release signing is required. Use Android Studio's Generate Signed Bundle / APK wizard " +
+                "or set EXPENSE_RELEASE_STORE_FILE, EXPENSE_RELEASE_STORE_PASSWORD, " +
+                "EXPENSE_RELEASE_KEY_ALIAS and EXPENSE_RELEASE_KEY_PASSWORD."
+        }
+    }
+}
+
+tasks.matching { it.name in setOf("packageRelease", "packageReleaseBundle") }.configureEach {
+    dependsOn(verifyReleaseSigning)
+}
+
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            val variantName = if (variant.name == "debug") "d" else "r"
-            val appName = "Expense Tracker"
-            val versionCode = android.defaultConfig.versionCode ?: 1
-            output.outputFileName.set("$appName-v$versionCode-$variantName.apk")
+            val buildType = variant.name
+            val name = android.defaultConfig.versionName
+            val code = android.defaultConfig.versionCode
+            output.outputFileName.set("ExpenseTracker-${name}-${code}-$buildType.apk")
         }
     }
 }

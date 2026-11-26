@@ -1,7 +1,10 @@
 package com.nahid.expensetracker.ui.presentation.component
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Home
@@ -18,9 +21,12 @@ internal fun categoryIcon(category: String): ImageVector = when (category.trim()
     "food", "groceries", "dining", "restaurants" -> Icons.Default.Restaurant
     "transport", "transportation", "travel", "fuel" -> Icons.Default.DirectionsBus
     "shopping", "clothing", "clothing & shoes" -> Icons.Default.ShoppingBag
-    "salary", "income", "deposit", "freelance", "bonus" -> Icons.Default.Payments
+    "salary", "income", "freelance", "bonus" -> Icons.Default.Payments
+    "deposit" -> Icons.Default.Savings
+    "pocket money" -> Icons.Default.AccountBalanceWallet
     "health", "medical", "healthcare" -> Icons.Default.MedicalServices
     "education" -> Icons.Default.School
     "entertainment" -> Icons.Default.ConfirmationNumber
+    "other", "others" -> Icons.Default.MoreHoriz
     else -> Icons.Default.Category
 }

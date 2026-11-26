@@ -125,7 +125,7 @@ class UpdateExpenseViewModel(
                 val result = expenseRepository.updateExpense(expense)
                 when (result) {
                     is Results.Success -> {
-                        showMessage(true, "Expense updated successfully")
+                        mutableUiEvent.emit(UpdateExpenseUiEvent.ShowMessage(true to "Saved on this device"))
                         mutableUiState.update { it.copy(isLoading = false) }
                         mutableUiEvent.emit(UpdateExpenseUiEvent.NavigateBack)
                     }

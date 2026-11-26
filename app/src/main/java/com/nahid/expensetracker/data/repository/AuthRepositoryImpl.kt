@@ -17,6 +17,7 @@ class AuthRepositoryImpl(
     private val auth: FirebaseAuth,
     private val googleAuthManager: GoogleAuthManager
 ) : AuthRepository {
+    override fun hasActiveSession(): Boolean = auth.currentUser != null
     override suspend fun signInWithGoogle(idToken: String): Results<FirebaseUser?> {
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)

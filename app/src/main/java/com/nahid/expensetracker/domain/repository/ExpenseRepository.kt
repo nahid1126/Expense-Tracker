@@ -15,5 +15,7 @@ interface ExpenseRepository {
     suspend fun deleteExpense(expense: Expense): Results<Boolean>
     suspend fun syncUnsyncedExpenses(uid: String): Results<Unit>
     suspend fun fetchAndStoreExpenses(): Results<Unit>
+    fun observeFailedSyncCount(): Flow<Int>
+    suspend fun retryFailedSync(): Results<Unit>
     fun getAllExpense(): Flow<List<Expense>>
 }

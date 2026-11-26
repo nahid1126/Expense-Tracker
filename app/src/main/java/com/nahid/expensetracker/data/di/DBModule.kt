@@ -20,10 +20,16 @@ internal val expenseMigration1To2 = object : Migration(1, 2) {
     }
 }
 
+internal val expenseMigration2To3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE ExpenseEntity ADD COLUMN syncFailed INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 val dbModule = module {
     single {
         Room.databaseBuilder(androidContext(), AppDatabase::class.java, AppConstants.DB_NAME)
-            .addMigrations(expenseMigration1To2)
+            .addMigrations(expenseMigration1To2, expenseMigration2To3)
             .build()
     }
 

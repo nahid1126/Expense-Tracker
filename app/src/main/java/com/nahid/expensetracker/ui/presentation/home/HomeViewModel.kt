@@ -15,11 +15,16 @@ import kotlinx.coroutines.launch
 class HomeViewModel(private val expenseRepository: ExpenseRepository) : ViewModel() {
     private val exitDialogVisible = MutableStateFlow(false)
 
-    val uiState = combine(exitDialogVisible, expenseRepository.getAllExpense()) { showExitDialog, expenses ->
+    val uiState = combine(
+        exitDialogVisible,
+        expenseRepository.getAllExpense(),
+        expenseRepository.observeFailedSyncCount(),
+    ) { showExitDialog, expenses, failedSyncCount ->
         val income = expenses.filter { it.type == "Income" }.sumOf { it.amount.toLong() }
         val outgoing = expenses.filter { it.type == "Expense" }.sumOf { it.amount.toLong() }
         HomeUiState(
             showExitDialog = showExitDialog,
+            failedSyncCount = failedSyncCount,
             totalIncome = income,
             totalExpense = outgoing,
             totalBalance = income - outgoing,
@@ -32,6 +37,10 @@ class HomeViewModel(private val expenseRepository: ExpenseRepository) : ViewMode
         viewModelScope.launch { expenseRepository.fetchAndStoreExpenses() }
     }
 
+    fun retrySync() {
+        viewModelScope.launch { expenseRepository.retryFailedSync() }
+    }
+
     fun showExitDialog(visible: Boolean) {
         exitDialogVisible.value = visible
     }
@@ -39,6 +48,7 @@ class HomeViewModel(private val expenseRepository: ExpenseRepository) : ViewMode
 
 data class HomeUiState(
     val showExitDialog: Boolean = false,
+    val failedSyncCount: Int = 0,
     val totalIncome: Long = 0,
     val totalExpense: Long = 0,
     val totalBalance: Long = 0,

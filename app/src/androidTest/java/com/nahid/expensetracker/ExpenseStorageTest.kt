@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.nahid.expensetracker.data.di.expenseMigration1To2
+import com.nahid.expensetracker.data.di.expenseMigration2To3
 import com.nahid.expensetracker.data.local.AppDatabase
 import com.nahid.expensetracker.data.local.entity.ExpenseEntity
 import java.util.UUID
@@ -37,7 +38,7 @@ class ExpenseStorageTest {
                 legacy.version = 1
             }
             val database = Room.databaseBuilder(context, AppDatabase::class.java, name)
-                .addMigrations(expenseMigration1To2)
+                .addMigrations(expenseMigration1To2, expenseMigration2To3)
                 .build()
             try {
                 val dao = database.expanseDao()
@@ -68,6 +69,14 @@ class ExpenseStorageTest {
                 original.type, original.category, "edit"))
             dao.acknowledge(id, "a", "")
             dao.mergeSnapshot("a", setOf(original.remoteId), listOf(original.copy(isSynced = true)))
+            assertEquals("Edited", dao.getPending("a").single().title)
+            dao.markSyncFailed(id, "a", "")
+            assertEquals(0, dao.observeFailedSyncCount("a").first())
+            dao.markSyncFailed(id, "a", "edit")
+            assertEquals(1, dao.observeFailedSyncCount("a").first())
+            assertTrue(dao.getPending("a").isEmpty())
+            assertEquals(0, dao.observeFailedSyncCount("b").first())
+            dao.resetFailedSync("a")
             assertEquals("Edited", dao.getPending("a").single().title)
             assertEquals(1, dao.markDeleted(id, "a", "delete"))
             dao.mergeSnapshot("a", setOf(original.remoteId), listOf(original.copy(isSynced = true)))

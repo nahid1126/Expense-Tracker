@@ -27,12 +27,12 @@ class TransectionsViewModel(private val expenseRepository: ExpenseRepository) : 
         val availableMonths = (expenses.mapNotNull {
             it.date.asTransactionDate()?.let(YearMonth::from)
         } + YearMonth.now()).distinct().sortedDescending()
+        val period = expenses.filter { state.month == null || it.isInMonth(state.month) }
         state.copy(
+            incomeTotal = period.filter { it.type == "Income" }.sumOf { it.amount.toLong() },
+            expenseTotal = period.filter { it.type == "Expense" }.sumOf { it.amount.toLong() },
             months = availableMonths,
-            transactions = expenses.filter { expense ->
-                (state.type == null || expense.type == state.type) &&
-                    (state.month == null || expense.isInMonth(state.month))
-            }.sortedWith(recentTransactionOrder),
+            transactions = period.filter { state.type == null || it.type == state.type }.sortedWith(recentTransactionOrder),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), filters.value)
 
@@ -60,6 +60,8 @@ data class TransectionsUiState(
     val month: YearMonth? = YearMonth.now(),
     val months: List<YearMonth> = listOf(YearMonth.now()),
     val transactions: List<Expense> = emptyList(),
+    val incomeTotal: Long = 0,
+    val expenseTotal: Long = 0,
     val pendingDelete: Expense? = null,
     val uiConfig: MainUIConfig = MainUIConfig(
         title = "Transactions",
